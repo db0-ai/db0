@@ -1,0 +1,44 @@
+{
+  "id": "db0",
+  "name": "db0 Memory & Context Engine",
+  "kind": "memory",
+  "description": "Agent-native semantic memory and context management — your agent remembers what matters, even across sessions.",
+  "version": "0.1.0",
+  "uiHints": {
+    "embeddings": {
+      "label": "Embedding Provider",
+      "help": "Embedding provider for semantic search: 'gemini' (free, recommended), 'ollama' (local), 'openai', or 'hash' (zero-config fallback)"
+    },
+    "agentId": {
+      "label": "Agent ID",
+      "help": "Stable identifier for this agent's memory scope (default: 'main')"
+    }
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": {
+        "type": "boolean"
+      },
+      "embeddings": {
+        "oneOf": [
+          { "type": "string", "enum": ["hash", "ollama", "openai", "gemini", "auto"] },
+          {
+            "type": "object",
+            "properties": {
+              "provider": { "type": "string", "enum": ["hash", "ollama", "openai", "gemini"] },
+              "model": { "type": "string" },
+              "baseUrl": { "type": "string" },
+              "apiKey": { "type": "string" },
+              "dimensions": { "type": "number" }
+            }
+          }
+        ]
+      },
+      "agentId": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "name": "@db0-ai/backends-postgres",
+  "version": "0.2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "files": [
+    "dist"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "pg": "^8.13.0",
+    "pgvector": "^0.2.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.0"
+  },
+  "peerDependencies": {
+    "@db0-ai/core": "0.2.0"
+  }
+}

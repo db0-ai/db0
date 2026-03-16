@@ -1,0 +1,2273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Inspector</title>
+<style>
+:root {
+  --bg-0: #0c0c0e;
+  --bg-1: #131316;
+  --bg-2: #1a1a1f;
+  --bg-3: #222228;
+  --bg-4: #2c2c34;
+  --bg-hover: #26262e;
+
+  --border-0: rgba(255,255,255,0.04);
+  --border-1: rgba(255,255,255,0.07);
+  --border-2: rgba(255,255,255,0.12);
+  --border-3: rgba(255,255,255,0.18);
+
+  --text-0: #f0f0f3;
+  --text-1: #b8b8c4;
+  --text-2: #7c7c8a;
+  --text-3: #52525c;
+
+  --accent: #7c6df0;
+  --accent-dim: rgba(124,109,240,0.12);
+  --accent-mid: rgba(124,109,240,0.25);
+
+  --scope-user: #e8a855;
+  --scope-session: #4ecdc4;
+  --scope-agent: #a78bfa;
+  --scope-task: #6b9bd2;
+
+  --green: #34d399;
+  --green-dim: rgba(52,211,153,0.12);
+  --red: #f87171;
+  --red-dim: rgba(248,113,113,0.1);
+  --amber: #fbbf24;
+  --amber-dim: rgba(251,191,36,0.1);
+
+  --radius-s: 6px;
+  --radius-m: 10px;
+  --radius-l: 16px;
+  --radius-pill: 100px;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+  --shadow-lg: 0 16px 48px rgba(0,0,0,0.5);
+  --shadow-glow: 0 0 24px rgba(124,109,240,0.08);
+
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast: 100ms;
+  --dur-med: 200ms;
+  --dur-slow: 350ms;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 14px; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+body {
+  background: var(--bg-0);
+  color: var(--text-0);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* Layout */
+.app {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  grid-template-rows: 56px 1fr;
+  min-height: 100vh;
+}
+
+/* Topbar */
+.topbar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border-1);
+  background: var(--bg-1);
+  z-index: 10;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  font-size: 1.14rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-0);
+}
+
+.logo span { color: var(--accent); }
+
+.topbar-label {
+  font-size: 0.78rem;
+  color: var(--text-2);
+  padding: 3px 10px;
+  background: var(--bg-3);
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.02em;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar-stat {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 0.78rem;
+  color: var(--text-1);
+  background: var(--bg-2);
+  border: 1px solid var(--border-0);
+}
+
+.topbar-stat strong {
+  font-weight: 600;
+  color: var(--text-0);
+  font-variant-numeric: tabular-nums;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  border-radius: var(--radius-s);
+  font-size: 0.78rem;
+  font-weight: 500;
+  border: 1px solid var(--border-1);
+  background: var(--bg-2);
+  color: var(--text-1);
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-sm:hover { background: var(--bg-3); color: var(--text-0); border-color: var(--border-2); }
+.btn-sm svg { width: 14px; height: 14px; }
+
+.agent-select {
+  padding: 5px 28px 5px 10px;
+  border-radius: var(--radius-s);
+  font-size: 0.82rem;
+  font-family: inherit;
+  font-weight: 500;
+  border: 1px solid var(--border-1);
+  background: var(--bg-2);
+  color: var(--text-0);
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237c7c8a' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  transition: all var(--dur-fast) var(--ease);
+}
+
+.agent-select:hover { border-color: var(--border-2); }
+.agent-select:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-dim); }
+.agent-select option { background: var(--bg-2); color: var(--text-0); }
+
+/* Sidebar */
+.sidebar {
+  border-right: 1px solid var(--border-1);
+  background: var(--bg-1);
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+.search-box {
+  position: relative;
+}
+
+.search-box svg {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 15px;
+  height: 15px;
+  color: var(--text-3);
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 9px 12px 9px 32px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-m);
+  color: var(--text-0);
+  font-size: 0.85rem;
+  font-family: inherit;
+  outline: none;
+  transition: all var(--dur-med) var(--ease);
+}
+
+.search-input::placeholder { color: var(--text-3); }
+.search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+
+.nav-section { display: flex; flex-direction: column; gap: 2px; }
+
+.nav-heading {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+  padding: 0 8px;
+  margin-bottom: 4px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-1);
+  font-size: 0.85rem;
+  font-family: inherit;
+  border-radius: var(--radius-s);
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease);
+  text-align: left;
+  width: 100%;
+}
+
+.nav-item:hover { background: var(--bg-hover); color: var(--text-0); }
+
+.nav-item.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.nav-item .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.nav-item .badge {
+  font-size: 0.7rem;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+  min-width: 20px;
+  text-align: right;
+}
+
+.nav-item.active .badge { color: var(--accent); opacity: 0.7; }
+
+.nav-item-label {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+/* View nav */
+.view-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.view-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 0.85rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  border-radius: var(--radius-s);
+  transition: all var(--dur-fast) var(--ease);
+  text-align: left;
+  width: 100%;
+}
+
+.view-nav-item svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.view-nav-item:hover { background: var(--bg-hover); color: var(--text-1); }
+.view-nav-item:hover svg { opacity: 0.8; }
+.view-nav-item.active { background: var(--accent-dim); color: var(--accent); }
+.view-nav-item.active svg { opacity: 1; color: var(--accent); }
+
+/* Card inline actions */
+.card-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease);
+  z-index: 2;
+}
+
+.mem-card:hover .card-actions { opacity: 1; }
+
+.card-action-btn {
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-s);
+  background: var(--bg-1);
+  color: var(--text-2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  transition: all var(--dur-fast) var(--ease);
+  padding: 0;
+}
+
+.card-action-btn svg { width: 13px; height: 13px; }
+.card-action-btn:hover { background: var(--bg-3); color: var(--text-0); border-color: var(--border-2); }
+.card-action-btn.act-edit:hover { color: var(--accent); border-color: var(--accent-mid); }
+.card-action-btn.act-confirm:hover { color: var(--green); border-color: rgba(52,211,153,0.3); }
+.card-action-btn.act-delete:hover { color: var(--red); border-color: rgba(248,113,113,0.3); }
+
+/* Inline edit row */
+.inline-edit {
+  margin-top: 8px;
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.inline-edit textarea {
+  flex: 1;
+  padding: 8px 10px;
+  background: var(--bg-2);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-s);
+  color: var(--text-0);
+  font-family: inherit;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  resize: vertical;
+  outline: none;
+  min-height: 60px;
+  box-shadow: 0 0 0 2px var(--accent-dim);
+}
+
+.inline-edit-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.inline-edit-actions button {
+  padding: 6px 10px;
+  border-radius: var(--radius-s);
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid var(--border-1);
+  transition: all var(--dur-fast) var(--ease);
+}
+
+.inline-save { background: var(--accent); color: #fff; border: none !important; }
+.inline-save:hover { opacity: 0.9; }
+.inline-cancel { background: var(--bg-3); color: var(--text-2); }
+.inline-cancel:hover { color: var(--text-0); }
+
+/* Runtime panel */
+.runtime-box {
+  padding: 10px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-0);
+  border-radius: var(--radius-m);
+}
+
+.runtime-profile-tag {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.runtime-desc {
+  font-size: 0.78rem;
+  color: var(--text-2);
+  line-height: 1.4;
+  margin-bottom: 6px;
+  word-break: break-word;
+}
+
+.cap-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+
+.cap-tag {
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-3);
+  color: var(--text-2);
+  border: 1px solid var(--border-0);
+}
+
+/* Main content */
+.main { overflow-y: auto; background: var(--bg-0); }
+
+/* ── Dashboard view ── */
+.dashboard {
+  padding: 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  max-width: 1200px;
+}
+
+.dash-card {
+  background: var(--bg-1);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-l);
+  padding: 20px;
+  transition: border-color var(--dur-med) var(--ease);
+}
+
+.dash-card:hover { border-color: var(--border-2); }
+
+.dash-card-title {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-2);
+  margin-bottom: 16px;
+}
+
+.dash-big-number {
+  font-size: 2.8rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: var(--text-0);
+  line-height: 1;
+  margin-bottom: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-sub { font-size: 0.78rem; color: var(--text-2); }
+
+.dash-card.full { grid-column: 1 / -1; }
+.dash-card.half { }
+
+/* SVG charts */
+.chart-container { margin-top: 12px; }
+
+.bar-chart { width: 100%; }
+
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.bar-label {
+  font-size: 0.78rem;
+  color: var(--text-1);
+  min-width: 80px;
+  text-align: right;
+}
+
+.bar-track {
+  flex: 1;
+  height: 22px;
+  background: var(--bg-3);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width var(--dur-slow) var(--ease);
+  min-width: 2px;
+}
+
+.bar-value {
+  font-size: 0.72rem;
+  color: var(--text-2);
+  min-width: 32px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Integrity cards */
+.integrity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.integrity-item {
+  padding: 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-0);
+  border-radius: var(--radius-m);
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease);
+}
+
+.integrity-item:hover { border-color: var(--border-2); }
+.integrity-item.warn { border-left: 3px solid var(--amber); }
+.integrity-item.ok { border-left: 3px solid var(--green); }
+
+.integrity-count {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text-0);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.integrity-label {
+  font-size: 0.75rem;
+  color: var(--text-2);
+  margin-top: 2px;
+}
+
+/* ── Memory list view ── */
+.memory-view {
+  padding: 24px;
+  max-width: 900px;
+}
+
+.view-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.view-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-0);
+}
+
+.view-count {
+  font-size: 0.78rem;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Time filter pills */
+.time-pills {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.time-pill {
+  padding: 4px 12px;
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-2);
+  font-size: 0.75rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease);
+}
+
+.time-pill:hover { border-color: var(--border-2); color: var(--text-1); }
+.time-pill.active { background: var(--accent-dim); border-color: var(--accent-mid); color: var(--accent); }
+
+/* Cards */
+.card-list { display: flex; flex-direction: column; gap: 6px; }
+
+.mem-card {
+  background: var(--bg-1);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-m);
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all var(--dur-med) var(--ease);
+  position: relative;
+}
+
+.mem-card:hover {
+  border-color: var(--border-2);
+  background: var(--bg-2);
+  box-shadow: var(--shadow-glow);
+  transform: translateY(-1px);
+}
+
+.mem-card.superseded { opacity: 0.45; }
+.mem-card.superseded .mem-content { text-decoration: line-through; text-decoration-color: var(--text-3); }
+
+.mem-card-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.scope-pill {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.scope-pill.user { background: rgba(232,168,85,0.12); color: var(--scope-user); }
+.scope-pill.session { background: rgba(78,205,196,0.12); color: var(--scope-session); }
+.scope-pill.agent { background: rgba(167,139,250,0.12); color: var(--scope-agent); }
+.scope-pill.task { background: rgba(107,155,210,0.12); color: var(--scope-task); }
+
+.conf-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: var(--radius-pill);
+  font-variant-numeric: tabular-nums;
+}
+
+.conf-high { background: var(--green-dim); color: var(--green); }
+.conf-med { background: var(--amber-dim); color: var(--amber); }
+.conf-low { background: var(--red-dim); color: var(--red); }
+
+.prov-tag {
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border-0);
+  color: var(--text-2);
+}
+
+.prov-tag.method { border-color: rgba(167,139,250,0.2); color: var(--scope-agent); }
+.prov-tag.source { border-color: rgba(78,205,196,0.2); color: var(--scope-session); }
+.prov-tag.fallback { border-color: rgba(251,191,36,0.2); color: var(--amber); background: var(--amber-dim); }
+
+.score-tag {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-dim);
+  color: var(--accent);
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.mem-version {
+  font-size: 0.68rem;
+  color: var(--text-3);
+  margin-left: auto;
+}
+
+.mem-content {
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--text-0);
+  margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mem-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tag-pill {
+  font-size: 0.65rem;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--bg-3);
+  color: var(--text-2);
+  border: 1px solid var(--border-0);
+}
+
+.tag-pill.confirmed { background: var(--green-dim); color: var(--green); border-color: rgba(52,211,153,0.2); }
+.tag-pill.corrected { background: var(--amber-dim); color: var(--amber); border-color: rgba(251,191,36,0.2); }
+
+.mem-date {
+  font-size: 0.7rem;
+  color: var(--text-3);
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Modal ── */
+.modal-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(12px);
+  z-index: 100;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 48px 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-med) var(--ease);
+}
+
+.modal-bg.open { opacity: 1; pointer-events: all; }
+
+.modal {
+  background: var(--bg-1);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-l);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 680px;
+  max-height: calc(100vh - 96px);
+  overflow-y: auto;
+  transform: translateY(10px) scale(0.98);
+  transition: transform var(--dur-med) var(--ease);
+}
+
+.modal-bg.open .modal { transform: translateY(0) scale(1); }
+
+.modal-head {
+  padding: 20px 24px 14px;
+  border-bottom: 1px solid var(--border-1);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modal-head-left { flex: 1; min-width: 0; }
+
+.modal-scope-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.modal-id {
+  font-size: 0.72rem;
+  color: var(--text-3);
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  word-break: break-all;
+}
+
+.close-btn {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-s);
+  background: var(--bg-2);
+  color: var(--text-2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  transition: all var(--dur-fast) var(--ease);
+  flex-shrink: 0;
+}
+
+.close-btn:hover { background: var(--bg-3); color: var(--text-0); }
+
+.modal-body { padding: 20px 24px; }
+
+.detail-content {
+  font-size: 0.92rem;
+  line-height: 1.65;
+  color: var(--text-0);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  background: var(--bg-2);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-m);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.detail-section { margin-bottom: 16px; }
+
+.section-title {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+  margin-bottom: 8px;
+}
+
+.meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.meta-cell {
+  padding: 8px 10px;
+  background: var(--bg-2);
+  border-radius: var(--radius-s);
+  border: 1px solid var(--border-0);
+}
+
+.meta-cell label {
+  display: block;
+  font-size: 0.65rem;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 2px;
+}
+
+.meta-cell span {
+  font-size: 0.82rem;
+  color: var(--text-0);
+}
+
+/* Chain */
+.chain { display: flex; flex-direction: column; gap: 0; }
+
+.chain-entry {
+  padding: 10px 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-1);
+  font-size: 0.82rem;
+  line-height: 1.4;
+  position: relative;
+}
+
+.chain-entry:first-child { border-radius: var(--radius-s) var(--radius-s) 0 0; }
+.chain-entry:last-child { border-radius: 0 0 var(--radius-s) var(--radius-s); }
+.chain-entry:not(:last-child) { border-bottom: none; }
+.chain-entry.current { background: var(--accent-dim); border-color: var(--accent-mid); }
+
+.chain-ver {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-3);
+}
+
+.chain-text { color: var(--text-2); margin-top: 2px; }
+.chain-entry.current .chain-text { color: var(--text-0); }
+
+/* Edges */
+.edge-list { display: flex; flex-direction: column; gap: 4px; }
+
+.edge-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-0);
+  border-radius: var(--radius-s);
+  font-size: 0.78rem;
+}
+
+.edge-type-tag {
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.edge-id {
+  color: var(--text-2);
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease);
+}
+
+.edge-id:hover { color: var(--accent); }
+
+/* Modal actions */
+.modal-actions {
+  padding: 14px 24px 20px;
+  border-top: 1px solid var(--border-1);
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.btn {
+  padding: 8px 16px;
+  border-radius: var(--radius-s);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 500;
+  border: 1px solid var(--border-1);
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-ghost { background: transparent; color: var(--text-2); }
+.btn-ghost:hover { background: var(--bg-3); color: var(--text-0); }
+
+.btn-confirm-action { background: var(--green-dim); color: var(--green); border-color: rgba(52,211,153,0.2); }
+.btn-confirm-action:hover { background: rgba(52,211,153,0.2); }
+
+.btn-edit { background: var(--accent-dim); color: var(--accent); border-color: var(--accent-mid); }
+.btn-edit:hover { background: rgba(124,109,240,0.2); }
+
+.btn-danger { background: var(--red-dim); color: var(--red); border-color: rgba(248,113,113,0.15); }
+.btn-danger:hover { background: rgba(248,113,113,0.18); }
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  font-weight: 600;
+}
+
+.btn-primary:hover { opacity: 0.9; }
+
+/* Edit mode */
+.edit-area { display: none; margin-bottom: 16px; }
+.edit-area.visible { display: block; }
+
+.edit-textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 12px 14px;
+  background: var(--bg-2);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-m);
+  color: var(--text-0);
+  font-family: inherit;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  resize: vertical;
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  justify-content: flex-end;
+}
+
+/* Delete confirm */
+.delete-confirm {
+  display: none;
+  padding: 12px 16px;
+  background: var(--red-dim);
+  border: 1px solid rgba(248,113,113,0.15);
+  border-radius: var(--radius-m);
+  margin-bottom: 16px;
+}
+
+.delete-confirm.visible { display: block; }
+
+.delete-confirm p {
+  font-size: 0.85rem;
+  color: var(--red);
+  margin-bottom: 10px;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+}
+
+.empty-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: var(--bg-2);
+  border: 1px solid var(--border-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  color: var(--text-3);
+}
+
+.empty-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-1);
+  margin-bottom: 4px;
+}
+
+.empty-sub { font-size: 0.82rem; color: var(--text-3); }
+
+/* Loading */
+.loading { display: flex; align-items: center; justify-content: center; padding: 60px; }
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border-1);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Toast */
+.toast-stack {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.toast-msg {
+  padding: 10px 16px;
+  background: var(--bg-3);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-md);
+  font-size: 0.82rem;
+  color: var(--text-0);
+  animation: toastIn 0.25s var(--ease) both;
+  max-width: 320px;
+}
+
+.toast-msg.success { border-left: 3px solid var(--green); }
+.toast-msg.error { border-left: 3px solid var(--red); }
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(6px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-1); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-2); }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .dashboard { grid-template-columns: 1fr; }
+  .modal { max-width: 100%; }
+}
+
+/* Confidence ring (small donut) */
+.conf-ring {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.conf-ring svg {
+  width: 16px;
+  height: 16px;
+  transform: rotate(-90deg);
+}
+
+.conf-ring-track { fill: none; stroke: var(--bg-3); stroke-width: 3; }
+.conf-ring-fill { fill: none; stroke-width: 3; stroke-linecap: round; transition: stroke-dashoffset var(--dur-slow) var(--ease); }
+
+/* Status dot */
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-dot.active { background: var(--green); }
+.status-dot.superseded { background: var(--text-3); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="logo" id="topbar-logo">db<span>0</span></div>
+      <span class="topbar-label" id="topbar-title">Memory Inspector</span>
+    </div>
+    <div class="topbar-right" id="topbar-right"></div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" class="search-input" id="search" placeholder="Search memories..." />
+    </div>
+
+    <nav class="view-nav" id="view-nav">
+      <button class="view-nav-item active" data-view="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+        Dashboard
+      </button>
+      <button class="view-nav-item" data-view="memories">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+        Memories
+      </button>
+      <button class="view-nav-item" data-view="manage">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18"/><path d="M8 7l4-4 4 4"/><path d="M8 17l4 4 4-4"/><rect x="2" y="9" width="5" height="6" rx="1"/><rect x="17" y="9" width="5" height="6" rx="1"/></svg>
+        Manage
+      </button>
+      <button class="view-nav-item" data-view="config">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1"/></svg>
+        Config
+      </button>
+    </nav>
+
+    <div id="memory-filters" style="display:none">
+      <div class="nav-section" id="scope-nav">
+        <div class="nav-heading">Scope</div>
+      </div>
+
+      <div class="nav-section" id="status-nav">
+        <div class="nav-heading">Status</div>
+      </div>
+
+      <div class="nav-section" id="source-nav" style="display:none">
+        <div class="nav-heading">Source</div>
+      </div>
+
+      <div class="nav-section" id="extraction-nav" style="display:none">
+        <div class="nav-heading">Extraction</div>
+      </div>
+    </div>
+
+    <div id="runtime-area" style="display:none">
+      <div class="nav-heading" style="margin-bottom:6px">Runtime</div>
+      <div class="runtime-box" id="runtime-box"></div>
+    </div>
+  </aside>
+
+  <div class="main" id="main">
+    <div class="loading"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-bg">
+  <div class="modal" id="modal-panel"></div>
+</div>
+
+<div class="toast-stack" id="toasts"></div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ── State ──
+  let allMemories = [];
+  let stats = { total: 0, byScope: {}, byStatus: {}, bySourceType: {}, byExtractionMethod: {} };
+  let integrity = null;
+  let runtime = null;
+  let filters = { scope: null, status: null, sourceType: null, extractionMethod: null };
+  let searchQuery = '';
+  let searchTimeout = null;
+  let currentView = 'dashboard';
+  let timeRange = null; // null = all, 7/30/90 days
+
+  const SCOPE_COLORS = { user: '#e8a855', session: '#4ecdc4', agent: '#a78bfa', task: '#6b9bd2' };
+
+  // ── API ──
+  async function api(path, opts = {}) {
+    const res = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...opts });
+    if (res.status === 204) return null;
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'HTTP ' + res.status); }
+    return res.json();
+  }
+
+  // ── Helpers ──
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function timeAgo(iso) {
+    const d = Date.now() - new Date(iso).getTime();
+    const m = Math.floor(d / 60000);
+    if (m < 1) return 'now';
+    if (m < 60) return m + 'm';
+    const h = Math.floor(m / 60);
+    if (h < 24) return h + 'h';
+    const dd = Math.floor(h / 24);
+    if (dd < 30) return dd + 'd';
+    return new Date(iso).toLocaleDateString('en', { month: 'short', day: 'numeric' });
+  }
+
+  function truncate(s, n = 200) { return s.length <= n ? s : s.slice(0, n) + '\u2026'; }
+
+  function contentStr(c) { return typeof c === 'string' ? c : JSON.stringify(c, null, 2); }
+
+  function toast(msg, type = 'success') {
+    const el = document.createElement('div');
+    el.className = 'toast-msg ' + type;
+    el.textContent = msg;
+    document.getElementById('toasts').appendChild(el);
+    setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.2s'; setTimeout(() => el.remove(), 200); }, 3000);
+  }
+
+  function confClass(c) {
+    if (c === null || c === undefined) return '';
+    if (c >= 0.7) return 'conf-high';
+    if (c >= 0.4) return 'conf-med';
+    return 'conf-low';
+  }
+
+  function confRing(c) {
+    if (c === null || c === undefined) return '';
+    const r = 6, circ = 2 * Math.PI * r;
+    const offset = circ * (1 - c);
+    const color = c >= 0.7 ? 'var(--green)' : c >= 0.4 ? 'var(--amber)' : 'var(--red)';
+    return `<span class="conf-ring" title="Confidence: ${(c * 100).toFixed(0)}%">
+      <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="${r}" class="conf-ring-track"/><circle cx="8" cy="8" r="${r}" class="conf-ring-fill" stroke="${color}" stroke-dasharray="${circ}" stroke-dashoffset="${offset}"/></svg>
+      <span style="font-size:0.65rem;color:${color};font-weight:600">${(c * 100).toFixed(0)}%</span>
+    </span>`;
+  }
+
+  function capEnabled(key) { return Boolean(runtime && runtime.capabilities && runtime.capabilities[key]); }
+
+  // ── Render top bar stats ──
+  function renderTopbarStats() {
+    const el = document.getElementById('topbar-right');
+    const agentId = runtime?.config?.agentId || '';
+    const profile = runtime?.profile || '';
+    const agents = runtime?.config?.agents || [];
+
+    let html = '';
+
+    // Agent switcher — dropdown if multiple agents, plain label if single
+    if (agents.length > 1) {
+      html += `<select class="agent-select" onchange="window.__switchAgent(this.value)" title="Switch agent">`;
+      for (const a of agents) {
+        const label = a.name ? a.name + ' (' + a.id + ')' : a.id;
+        const selected = a.id === agentId ? ' selected' : '';
+        html += `<option value="${esc(a.id)}"${selected}>${esc(label)}</option>`;
+      }
+      html += '</select>';
+    } else if (agentId) {
+      html += `<span class="topbar-stat">${esc(agentId)}</span>`;
+    }
+
+    el.innerHTML = html;
+
+    // Update branding based on runtime profile
+    const logoEl = document.getElementById('topbar-logo');
+    const titleEl = document.getElementById('topbar-title');
+    if (profile === 'openclaw') {
+      if (logoEl) logoEl.innerHTML = 'Open<span>Claw</span>';
+      if (titleEl) titleEl.textContent = 'Memory Inspector';
+      document.title = 'OpenClaw Memory Inspector';
+    } else if (profile === 'claude-code') {
+      if (logoEl) logoEl.innerHTML = 'Claude <span>Code</span>';
+      if (titleEl) titleEl.textContent = 'Memory Inspector';
+      document.title = 'Claude Code Memory Inspector';
+    } else {
+      if (logoEl) logoEl.innerHTML = 'db<span>0</span>';
+      if (titleEl) titleEl.textContent = 'Memory Inspector';
+      document.title = 'db0 Memory Inspector';
+    }
+  }
+
+  // ── Render sidebar nav ──
+  function renderSidebarNav() {
+    const scopeNav = document.getElementById('scope-nav');
+    let h = '<div class="nav-heading">Scope</div>';
+    h += navItem('scope', null, 'All scopes', stats.total);
+    for (const [s, c] of Object.entries(stats.byScope)) {
+      h += navItem('scope', s, s, c, SCOPE_COLORS[s]);
+    }
+    scopeNav.innerHTML = h;
+
+    const statusNav = document.getElementById('status-nav');
+    let sh = '<div class="nav-heading">Status</div>';
+    sh += navItem('status', null, 'All', stats.total);
+    for (const [s, c] of Object.entries(stats.byStatus)) {
+      sh += navItem('status', s, s, c);
+    }
+    statusNav.innerHTML = sh;
+
+    // Source type
+    const srcNav = document.getElementById('source-nav');
+    if (stats.bySourceType && Object.keys(stats.bySourceType).length > 0) {
+      srcNav.style.display = '';
+      let st = '<div class="nav-heading">Source</div>';
+      st += navItem('sourceType', null, 'All', stats.total);
+      for (const [s, c] of Object.entries(stats.bySourceType)) {
+        st += navItem('sourceType', s, s, c);
+      }
+      srcNav.innerHTML = st;
+    }
+
+    // Extraction
+    const exNav = document.getElementById('extraction-nav');
+    if (stats.byExtractionMethod && Object.keys(stats.byExtractionMethod).length > 0) {
+      exNav.style.display = '';
+      let em = '<div class="nav-heading">Extraction</div>';
+      em += navItem('extractionMethod', null, 'All', stats.total);
+      for (const [s, c] of Object.entries(stats.byExtractionMethod)) {
+        em += navItem('extractionMethod', s, s, c);
+      }
+      exNav.innerHTML = em;
+    }
+  }
+
+  function navItem(filterType, value, label, count, dotColor) {
+    const active = filters[filterType] === value ? 'active' : '';
+    const dot = dotColor ? `<span class="dot" style="background:${dotColor}"></span>` : '';
+    return `<button class="nav-item ${active}" onclick="window.__setFilter('${filterType}', ${value === null ? 'null' : "'" + value + "'"})">
+      <span class="nav-item-label">${dot}${esc(label)}</span>
+      <span class="badge">${count}</span>
+    </button>`;
+  }
+
+  // ── Render runtime ──
+  function renderRuntime() {
+    if (!runtime) return;
+    const area = document.getElementById('runtime-area');
+    const box = document.getElementById('runtime-box');
+    area.style.display = '';
+
+    const caps = [];
+    if (capEnabled('supportsFileSnapshots')) caps.push('snapshots');
+    if (capEnabled('supportsFileRollback')) caps.push('rollback');
+    if (capEnabled('supportsJournalRecovery')) caps.push('journal');
+    if (capEnabled('supportsContradictionLinks')) caps.push('contradictions');
+    if (capEnabled('hasIntegrityApi')) caps.push('integrity');
+    if (capEnabled('hasExplainApi')) caps.push('explain');
+
+    box.innerHTML = `
+      <div class="runtime-profile-tag">${esc(runtime.profile || 'generic')}</div>
+      <div class="runtime-desc">${esc(runtime.memoryModel || 'db0 runtime')}</div>
+      ${runtime.workspaceDir ? `<div class="runtime-desc" style="font-size:0.7rem;color:var(--text-3)">${esc(runtime.workspaceDir)}</div>` : ''}
+      ${caps.length > 0 ? `<div class="cap-tags">${caps.map(c => `<span class="cap-tag">${c}</span>`).join('')}</div>` : ''}
+    `;
+  }
+
+  // ── Views ──
+  function switchView(view) {
+    currentView = view;
+    document.querySelectorAll('.view-nav-item').forEach(t => t.classList.toggle('active', t.dataset.view === view));
+    // Only show filters on the memories view
+    const filtersEl = document.getElementById('memory-filters');
+    if (filtersEl) filtersEl.style.display = view === 'memories' ? '' : 'none';
+    renderView();
+  }
+
+  function renderView() {
+    const main = document.getElementById('main');
+    if (currentView === 'dashboard') renderDashboard(main);
+    else if (currentView === 'manage') renderManage(main);
+    else if (currentView === 'config') renderConfig(main);
+    else renderMemoryList(main);
+  }
+
+  // ── Dashboard ──
+  function renderDashboard(main) {
+    const active = stats.byStatus?.active || 0;
+    const superseded = stats.byStatus?.superseded || 0;
+
+    let html = '<div class="dashboard">';
+
+    // Total card
+    html += `<div class="dash-card" style="cursor:pointer" onclick="window.__dashNav('status',null)">
+      <div class="dash-card-title">Total Memories</div>
+      <div class="dash-big-number">${stats.total}</div>
+      <div class="dash-sub">${active} active, ${superseded} superseded</div>
+    </div>`;
+
+    // Activity card
+    const act = stats.activity || {};
+    const freshness = act.newestAt ? timeAgo(act.newestAt) : 'no data';
+    const freshnessColor = !act.newestAt ? 'var(--text-2)'
+      : (Date.now() - new Date(act.newestAt).getTime() < 3600000) ? 'var(--green)'
+      : (Date.now() - new Date(act.newestAt).getTime() < 86400000) ? 'var(--accent)'
+      : '#e8a855';
+    html += `<div class="dash-card">
+      <div class="dash-card-title">Activity</div>
+      <div style="display:flex;align-items:baseline;gap:8px;margin:8px 0">
+        <span style="font-size:0.7rem;width:8px;height:8px;border-radius:50%;background:${freshnessColor};display:inline-block;flex-shrink:0"></span>
+        <span style="font-size:1.1rem;font-weight:600;color:var(--text-0)">${freshness}</span>
+      </div>
+      <div class="dash-sub">Last indexed</div>
+      <div style="display:flex;gap:16px;margin-top:12px;font-size:0.82rem">
+        <div><span style="font-weight:600;color:var(--text-0)">${act.last24h || 0}</span> <span style="color:var(--text-2)">last 24h</span></div>
+        <div><span style="font-weight:600;color:var(--text-0)">${act.last7d || 0}</span> <span style="color:var(--text-2)">last 7d</span></div>
+      </div>
+      ${act.oldestAt ? `<div style="margin-top:8px;font-size:0.75rem;color:var(--text-2)">First memory: ${new Date(act.oldestAt).toLocaleDateString()}</div>` : ''}
+    </div>`;
+
+    // Scope distribution
+    html += `<div class="dash-card">
+      <div class="dash-card-title">By Scope</div>
+      <div class="chart-container">${barChart(stats.byScope, SCOPE_COLORS, 'scope')}</div>
+    </div>`;
+
+    // Extraction method
+    const exColors = { rules: '#4ecdc4', llm: '#a78bfa', manual: '#e8a855', fallback: '#fbbf24', preserve: '#6b9bd2', reconcile: '#f87171' };
+    if (stats.byExtractionMethod && Object.keys(stats.byExtractionMethod).length > 0) {
+      html += `<div class="dash-card">
+        <div class="dash-card-title">By Extraction Method</div>
+        <div class="chart-container">${barChart(stats.byExtractionMethod, exColors, 'extractionMethod')}</div>
+      </div>`;
+    }
+
+    // Source type
+    const stColors = { conversation: '#4ecdc4', tool: '#a78bfa', observation: '#e8a855', inference: '#fbbf24', manual: '#6b9bd2' };
+    if (stats.bySourceType && Object.keys(stats.bySourceType).length > 0) {
+      html += `<div class="dash-card">
+        <div class="dash-card-title">By Source Type</div>
+        <div class="chart-container">${barChart(stats.bySourceType, stColors, 'sourceType')}</div>
+      </div>`;
+    }
+
+    // Confidence distribution (computed from allMemories)
+    const confBuckets = { 'High (>70%)': 0, 'Medium (40-70%)': 0, 'Low (<40%)': 0, 'Unset': 0 };
+    const confColors = { 'High (>70%)': '#34d399', 'Medium (40-70%)': '#fbbf24', 'Low (<40%)': '#f87171', 'Unset': '#52525c' };
+    for (const m of allMemories) {
+      if (m.confidence === null || m.confidence === undefined) confBuckets['Unset']++;
+      else if (m.confidence >= 0.7) confBuckets['High (>70%)']++;
+      else if (m.confidence >= 0.4) confBuckets['Medium (40-70%)']++;
+      else confBuckets['Low (<40%)']++;
+    }
+    const hasConf = confBuckets['High (>70%)'] + confBuckets['Medium (40-70%)'] + confBuckets['Low (<40%)'] > 0;
+    if (hasConf) {
+      html += `<div class="dash-card">
+        <div class="dash-card-title">Confidence Distribution</div>
+        <div class="chart-container">${barChart(confBuckets, confColors)}</div>
+      </div>`;
+    }
+
+    // ── Integrity / Health section (inline in dashboard) ──
+    html += `<div class="dash-card full" id="dash-integrity">
+      <div class="dash-card-title">Memory Health</div>
+      <div id="dash-integrity-content"><div class="loading" style="padding:20px"><div class="spinner"></div></div></div>
+    </div>`;
+
+    html += '</div>';
+    main.innerHTML = html;
+
+    // Load integrity async
+    loadIntegrityInline();
+  }
+
+  async function loadIntegrityInline() {
+    const container = document.getElementById('dash-integrity-content');
+    if (!container) return;
+    try {
+      if (!integrity) integrity = await api('/api/integrity');
+      const anomalies = integrity.anomalies || [];
+      const total = anomalies.reduce((s, a) => s + a.count, 0);
+
+      if (total === 0) {
+        container.innerHTML = `<div style="display:flex;align-items:center;gap:10px;padding:8px 0">
+          <span style="color:var(--green);font-size:1.2rem">&#10003;</span>
+          <span style="font-size:0.88rem;color:var(--text-1)">All clear — no anomalies detected in ${stats.total} memories.</span>
+        </div>`;
+      } else {
+        let h = '<div class="integrity-grid">';
+        for (const a of anomalies) {
+          const cls = a.count > 0 ? 'warn' : 'ok';
+          const label = a.type.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+          h += `<div class="integrity-item ${cls}" ${a.count > 0 && a.sampleIds.length ? `onclick="window.__openMemory('${a.sampleIds[0]}')" style="cursor:pointer"` : ''}>
+            <div class="integrity-count">${a.count}</div>
+            <div class="integrity-label">${esc(label)}</div>
+          </div>`;
+        }
+        h += '</div>';
+        container.innerHTML = h;
+      }
+    } catch (e) {
+      container.innerHTML = `<div style="font-size:0.82rem;color:var(--text-2)">Could not load: ${esc(e.message)}</div>`;
+    }
+  }
+
+  function barChart(data, colorMap, filterType) {
+    const max = Math.max(...Object.values(data), 1);
+    let html = '<div class="bar-chart">';
+    for (const [label, value] of Object.entries(data)) {
+      const pct = (value / max) * 100;
+      const color = (colorMap && colorMap[label]) || 'var(--accent)';
+      const clickAttr = filterType ? ` onclick="window.__dashNav('${filterType}','${label}')" style="cursor:pointer" title="View ${label} memories"` : '';
+      html += `<div class="bar-row"${clickAttr}>
+        <span class="bar-label">${esc(label)}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+        <span class="bar-value">${value}</span>
+      </div>`;
+    }
+    html += '</div>';
+    return html;
+  }
+
+  // ── Manage view ──
+  function renderManage(main) {
+    const dbPath = runtime?.config?.dbPath || 'unknown';
+    const agentId = runtime?.config?.agentId || 'main';
+    const backend = runtime?.config?.backend || 'sqlite';
+
+    let html = '<div class="memory-view" style="max-width:700px">';
+    html += '<div class="view-header"><span class="view-title">Manage</span></div>';
+    html += '<div style="display:flex;flex-direction:column;gap:16px">';
+
+    // ── Export section
+    html += `<div style="background:var(--bg-1);border:1px solid var(--border-1);border-radius:var(--radius-l);padding:24px;border-left:3px solid var(--green)">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
+        <div>
+          <div style="font-size:1rem;font-weight:600;color:var(--text-0);margin-bottom:4px">Export Backup</div>
+          <div style="font-size:0.82rem;color:var(--text-2);line-height:1.5">
+            Download a full backup of all memories, embeddings, and edges as JSON.<br>
+            Use this to migrate between backends or recover from data loss.
+          </div>
+          <div style="margin-top:10px;font-size:0.75rem;color:var(--text-3)">
+            <strong>${stats.total}</strong> memories &middot; <strong>${agentId}</strong> agent &middot; <strong>${backend}</strong> backend
+          </div>
+        </div>
+        <button class="btn btn-confirm-action" onclick="window.__export()" style="flex-shrink:0;padding:10px 20px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export
+        </button>
+      </div>
+    </div>`;
+
+    // ── Import section
+    html += `<div style="background:var(--bg-1);border:1px solid var(--border-1);border-radius:var(--radius-l);padding:24px;border-left:3px solid var(--accent)">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
+        <div>
+          <div style="font-size:1rem;font-weight:600;color:var(--text-0);margin-bottom:4px">Import / Restore</div>
+          <div style="font-size:0.82rem;color:var(--text-2);line-height:1.5">
+            Restore memories from a previously exported backup file.<br>
+            Existing memories with the same ID will be skipped (no duplicates).
+          </div>
+        </div>
+        <button class="btn btn-edit" onclick="window.__import()" style="flex-shrink:0;padding:10px 20px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Import
+        </button>
+      </div>
+    </div>`;
+
+    // ── Bulk delete section
+    html += `<div style="background:var(--bg-1);border:1px solid var(--border-1);border-radius:var(--radius-l);padding:24px;border-left:3px solid var(--red)">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
+        <div>
+          <div style="font-size:1rem;font-weight:600;color:var(--text-0);margin-bottom:4px">Purge Superseded</div>
+          <div style="font-size:0.82rem;color:var(--text-2);line-height:1.5">
+            Permanently delete all superseded memories. Active memories are not affected.<br>
+            This frees storage but removes version history.
+          </div>
+          <div style="margin-top:10px;font-size:0.75rem;color:var(--text-3)">
+            <strong>${stats.byStatus?.superseded || 0}</strong> superseded memories
+          </div>
+        </div>
+        <button class="btn btn-danger" onclick="window.__purgeSuperseded()" style="flex-shrink:0;padding:10px 20px" ${(stats.byStatus?.superseded || 0) === 0 ? 'disabled style="flex-shrink:0;padding:10px 20px;opacity:0.4;cursor:not-allowed"' : ''}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          Purge
+        </button>
+      </div>
+    </div>`;
+
+    // ── API access
+    html += `<div style="background:var(--bg-1);border:1px solid var(--border-1);border-radius:var(--radius-l);padding:24px;border-left:3px solid var(--text-3)">
+      <div style="font-size:1rem;font-weight:600;color:var(--text-0);margin-bottom:8px">API Access</div>
+      <div style="font-size:0.82rem;color:var(--text-2);line-height:1.5;margin-bottom:12px">
+        Use these endpoints for scripting and automation.
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${apiRow('GET', '/api/stats', 'Memory statistics')}
+        ${apiRow('GET', '/api/memories?limit=500', 'List all memories')}
+        ${apiRow('POST', '/api/search', 'Semantic search (body: {query})')}
+        ${apiRow('GET', '/api/export', 'Full backup export')}
+        ${apiRow('POST', '/api/import', 'Restore from backup')}
+        ${apiRow('GET', '/api/integrity', 'Health / integrity report')}
+        ${apiRow('GET', '/api/runtime', 'Runtime config & capabilities')}
+        ${apiRow('GET', '/api/memories/:id', 'Get single memory')}
+        ${apiRow('PUT', '/api/memories/:id', 'Correct a memory (body: {content})')}
+        ${apiRow('POST', '/api/memories/:id/confirm', 'Confirm a memory')}
+        ${apiRow('DELETE', '/api/memories/:id', 'Delete a memory')}
+        ${apiRow('GET', '/api/memories/:id/explain', 'Quality & provenance analysis')}
+        ${apiRow('GET', '/api/memories/:id/chain', 'Version history chain')}
+      </div>
+    </div>`;
+
+    html += '</div></div>';
+    main.innerHTML = html;
+  }
+
+  function apiRow(method, path, desc) {
+    const methodColor = method === 'GET' ? 'var(--green)' : method === 'POST' ? 'var(--accent)' : method === 'PUT' ? 'var(--amber)' : 'var(--red)';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:6px 8px;background:var(--bg-2);border-radius:var(--radius-s);border:1px solid var(--border-0)">
+      <span style="font-size:0.68rem;font-weight:700;color:${methodColor};min-width:42px;font-family:'SF Mono',Menlo,monospace">${method}</span>
+      <code style="font-size:0.78rem;color:var(--text-0);font-family:'SF Mono',Menlo,monospace;flex:1">${esc(path)}</code>
+      <span style="font-size:0.72rem;color:var(--text-3)">${esc(desc)}</span>
+    </div>`;
+  }
+
+  // ── Config view ──
+  function renderConfig(main) {
+    const cfg = runtime && runtime.config;
+    if (!cfg && !runtime) {
+      main.innerHTML = '<div class="empty-state"><div class="empty-icon">?</div><div class="empty-title">No configuration available</div><div class="empty-sub">Runtime config was not provided by the inspector server.</div></div>';
+      return;
+    }
+
+    let html = '<div class="memory-view" style="max-width:700px">';
+    html += '<div class="view-header"><span class="view-title">Configuration</span></div>';
+
+    // Config sections as cards
+    html += '<div style="display:flex;flex-direction:column;gap:12px">';
+
+    // Embedding section
+    if (cfg && (cfg.embeddingProvider || cfg.embeddingModel)) {
+      html += configCard('Embeddings', [
+        cfg.embeddingProvider && ['Provider', cfg.embeddingProvider],
+        cfg.embeddingModel && ['Model', cfg.embeddingModel],
+      ].filter(Boolean), 'var(--scope-session)');
+    }
+
+    // LLM section
+    if (cfg && cfg.llmModel) {
+      html += configCard('LLM Model', [
+        ['Primary', cfg.llmModel],
+        cfg.extra?.agentModel && ['Agent Override', cfg.extra.agentModel],
+      ].filter(Boolean), 'var(--scope-agent)');
+    }
+
+    // Backend section
+    if (cfg) {
+      const backendRows = [
+        cfg.backend && ['Type', cfg.backend],
+        cfg.dbPath && ['Database', cfg.dbPath],
+        cfg.schemaVersion && ['Schema Version', 'v' + cfg.schemaVersion],
+      ].filter(Boolean);
+      if (backendRows.length) {
+        html += configCard('Backend', backendRows, 'var(--scope-task)');
+      }
+    }
+
+    // Agent section
+    if (cfg) {
+      const agentRows = [
+        cfg.agentId && ['Agent ID', cfg.agentId],
+        cfg.extra?.agentName && ['Agent Name', cfg.extra.agentName],
+      ].filter(Boolean);
+      if (agentRows.length) {
+        html += configCard('Agent', agentRows, 'var(--scope-user)');
+      }
+    }
+
+    // Runtime section
+    if (runtime) {
+      const rtRows = [
+        runtime.profile && ['Profile', runtime.profile],
+        cfg?.extra?.openclawVersion && ['OpenClaw Version', cfg.extra.openclawVersion],
+        cfg?.extra?.contextEngine && ['Context Engine', cfg.extra.contextEngine],
+        cfg?.extra?.compaction && ['Compaction Mode', cfg.extra.compaction],
+        cfg?.extra?.workspace && ['Workspace', cfg.extra.workspace],
+        runtime.workspaceDir && ['Workspace Dir', runtime.workspaceDir],
+        runtime.sessionFile && ['Session File', runtime.sessionFile],
+      ].filter(Boolean);
+      if (rtRows.length) {
+        html += configCard('Runtime', rtRows, 'var(--accent)');
+      }
+    }
+
+    // Memory model
+    if (runtime && runtime.memoryModel) {
+      html += `<div style="background:var(--bg-1);border:1px solid var(--border-1);border-radius:var(--radius-l);padding:20px">
+        <div style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-2);margin-bottom:8px">Memory Model</div>
+        <div style="font-size:0.88rem;color:var(--text-1);line-height:1.5">${esc(runtime.memoryModel)}</div>
+      </div>`;
+    }
+
+    // Capabilities
+    if (runtime && runtime.capabilities) {
+      const caps = runtime.capabilities;
+      const items = [
+        ['Explain API', caps.hasExplainApi],
+        ['Integrity API', caps.hasIntegrityApi],
+        ['File Snapshots', caps.supportsFileSnapshots],
+        ['File Rollback', caps.supportsFileRollback],
+        ['Journal Recovery', caps.supportsJournalRecovery],
+        ['Contradiction Links', caps.supportsContradictionLinks],
+      ];
+      html += `<div style="background:var(--bg-1);border:1px solid var(--border-1);border-radius:var(--radius-l);padding:20px">
+        <div style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-2);margin-bottom:12px">Capabilities</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          ${items.map(([label, enabled]) => `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg-2);border-radius:var(--radius-s);border:1px solid var(--border-0)">
+            <span style="width:8px;height:8px;border-radius:50%;background:${enabled ? 'var(--green)' : 'var(--text-3)'};flex-shrink:0"></span>
+            <span style="font-size:0.82rem;color:${enabled ? 'var(--text-0)' : 'var(--text-3)'}">${esc(String(label))}</span>
+          </div>`).join('')}
+        </div>
+      </div>`;
+    }
+
+    // Extra config entries not yet shown
+    if (cfg && cfg.extra) {
+      const shown = new Set(['agentName', 'agentModel', 'openclawVersion', 'contextEngine', 'compaction', 'workspace']);
+      const remaining = Object.entries(cfg.extra).filter(([k]) => !shown.has(k));
+      if (remaining.length > 0) {
+        html += configCard('Other', remaining.map(([k, v]) => [k, v]), 'var(--text-2)');
+      }
+    }
+
+    html += '</div></div>';
+    main.innerHTML = html;
+  }
+
+  function configCard(title, rows, accentColor) {
+    let html = `<div style="background:var(--bg-1);border:1px solid var(--border-1);border-radius:var(--radius-l);padding:20px;border-left:3px solid ${accentColor}">`;
+    html += `<div style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-2);margin-bottom:12px">${esc(title)}</div>`;
+    html += '<div style="display:flex;flex-direction:column;gap:6px">';
+    for (const [label, value] of rows) {
+      html += `<div style="display:flex;align-items:baseline;gap:12px">
+        <span style="font-size:0.78rem;color:var(--text-2);min-width:110px">${esc(String(label))}</span>
+        <span style="font-size:0.88rem;color:var(--text-0);font-family:'SF Mono',Menlo,Consolas,monospace;font-size:0.82rem;word-break:break-all">${esc(String(value))}</span>
+      </div>`;
+    }
+    html += '</div></div>';
+    return html;
+  }
+
+  // ── Memory list ──
+  function renderMemoryList(main) {
+    let memories = allMemories;
+
+    if (filters.scope) memories = memories.filter(m => m.scope === filters.scope);
+    if (filters.status) memories = memories.filter(m => m.status === filters.status);
+    if (filters.sourceType) memories = memories.filter(m => (m.sourceType || 'unknown') === filters.sourceType);
+    if (filters.extractionMethod) memories = memories.filter(m => (m.extractionMethod || 'unknown') === filters.extractionMethod);
+
+    if (timeRange) {
+      const cutoff = Date.now() - timeRange * 24 * 60 * 60 * 1000;
+      memories = memories.filter(m => new Date(m.createdAt).getTime() >= cutoff);
+    }
+
+    if (memories.length === 0) {
+      main.innerHTML = `<div class="memory-view">
+        ${renderTimeFilter()}
+        <div class="empty-state">
+          <div class="empty-icon">\u25C7</div>
+          <div class="empty-title">No memories found</div>
+          <div class="empty-sub">${allMemories.length === 0 ? 'This agent has no stored memories yet.' : 'Try adjusting your filters or time range.'}</div>
+        </div>
+      </div>`;
+      return;
+    }
+
+    let html = '<div class="memory-view">';
+    html += `<div class="view-header"><span class="view-title">Memories</span><span class="view-count">${memories.length} of ${allMemories.length}</span></div>`;
+    html += renderTimeFilter();
+    html += '<div class="card-list">';
+    memories.forEach((m, i) => { html += renderCard(m, i); });
+    html += '</div></div>';
+    main.innerHTML = html;
+  }
+
+  function renderTimeFilter() {
+    const pills = [
+      { label: '7d', value: 7 },
+      { label: '30d', value: 30 },
+      { label: '90d', value: 90 },
+      { label: 'All', value: null },
+    ];
+    return `<div class="time-pills">${pills.map(p =>
+      `<button class="time-pill ${timeRange === p.value ? 'active' : ''}" onclick="window.__setTime(${p.value})">${p.label}</button>`
+    ).join('')}</div>`;
+  }
+
+  function renderCard(m, i) {
+    const content = contentStr(m.content);
+    const isFallback = m.extractionMethod === 'fallback';
+
+    let topParts = `<span class="scope-pill ${m.scope}">${m.scope}</span>`;
+
+    if (m.status === 'superseded') {
+      topParts += `<span class="status-dot superseded" title="Superseded"></span>`;
+    }
+
+    if (m.confidence !== null && m.confidence !== undefined) {
+      topParts += `<span class="conf-badge ${confClass(m.confidence)}">${(m.confidence * 100).toFixed(0)}%</span>`;
+    }
+
+    if (m.sourceType) {
+      topParts += `<span class="prov-tag source">${esc(m.sourceType)}</span>`;
+    }
+    if (m.extractionMethod) {
+      topParts += `<span class="prov-tag ${isFallback ? 'fallback' : 'method'}">${esc(m.extractionMethod)}</span>`;
+    }
+
+    if (m.score !== undefined && m.score !== null) {
+      topParts += `<span class="score-tag">${Number(m.score).toFixed(3)}</span>`;
+    }
+
+    topParts += `<span class="mem-version">v${m.version}</span>`;
+
+    const tags = (m.tags || []).map(t => {
+      const cls = t === 'user-confirmed' ? 'confirmed' : t === 'user-corrected' ? 'corrected' : '';
+      return `<span class="tag-pill ${cls}">${esc(t)}</span>`;
+    }).join('');
+
+    const actions = m.status === 'active' ? `<div class="card-actions">
+      <button class="card-action-btn act-edit" onclick="event.stopPropagation();window.__inlineEdit('${m.id}')" title="Edit">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </button>
+      ${!(m.tags || []).includes('user-confirmed') ? `<button class="card-action-btn act-confirm" onclick="event.stopPropagation();window.__quickConfirm('${m.id}')" title="Confirm">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      </button>` : ''}
+      <button class="card-action-btn act-delete" onclick="event.stopPropagation();window.__quickDelete('${m.id}')" title="Delete">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      </button>
+    </div>` : '';
+
+    return `<div class="mem-card ${m.status === 'superseded' ? 'superseded' : ''}" id="card-${m.id}" onclick="window.__openMemory('${m.id}')">
+      ${actions}
+      <div class="mem-card-top">${topParts}</div>
+      <div class="mem-content" id="content-${m.id}">${esc(truncate(content))}</div>
+      <div class="mem-footer">${tags}<span class="mem-date">${timeAgo(m.createdAt)}</span></div>
+      <div id="inline-edit-${m.id}"></div>
+    </div>`;
+  }
+
+  // ── Modal ──
+  async function openMemory(id) {
+    const bg = document.getElementById('modal-bg');
+    const panel = document.getElementById('modal-panel');
+    bg.classList.add('open');
+    panel.innerHTML = '<div class="loading" style="padding:40px"><div class="spinner"></div></div>';
+
+    try {
+      const explainUrl = '/api/memories/' + encodeURIComponent(id) + '/explain' + (searchQuery ? '?query=' + encodeURIComponent(searchQuery) : '');
+      const [memory, chainData, explain] = await Promise.all([
+        api('/api/memories/' + encodeURIComponent(id)),
+        api('/api/memories/' + encodeURIComponent(id) + '/chain'),
+        capEnabled('hasExplainApi') ? api(explainUrl).catch(() => null) : Promise.resolve(null),
+      ]);
+
+      if (!memory) { toast('Memory not found', 'error'); closeModal(); return; }
+
+      const content = contentStr(memory.content);
+      const chain = chainData.chain || [];
+      const edges = memory.edges || [];
+
+      let html = `<div class="modal-head"><div class="modal-head-left">
+        <div class="modal-scope-row">
+          <span class="scope-pill ${memory.scope}">${memory.scope}</span>
+          <span class="status-dot ${memory.status}"></span>
+          <span style="font-size:0.72rem;color:var(--text-2)">${memory.status}</span>
+          <span style="font-size:0.72rem;color:var(--text-3)">v${memory.version}</span>
+          ${confRing(memory.confidence)}
+        </div>
+        <div class="modal-id">${esc(memory.id)}</div>
+      </div>
+      <button class="close-btn" onclick="window.__closeModal()">&times;</button></div>`;
+
+      html += '<div class="modal-body">';
+      html += `<div class="detail-content" id="detail-content">${esc(content)}</div>`;
+
+      html += `<div class="edit-area" id="edit-area">
+        <textarea class="edit-textarea" id="edit-textarea">${esc(content)}</textarea>
+        <div class="edit-actions">
+          <button class="btn btn-ghost" onclick="window.__cancelEdit()">Cancel</button>
+          <button class="btn btn-primary" onclick="window.__saveCorrection('${memory.id}')">Save</button>
+        </div>
+      </div>`;
+
+      html += `<div class="delete-confirm" id="delete-confirm">
+        <p>Permanently delete this memory? This cannot be undone.</p>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn btn-ghost" onclick="document.getElementById('delete-confirm').classList.remove('visible')">Cancel</button>
+          <button class="btn btn-danger" onclick="window.__confirmDelete('${memory.id}')">Delete</button>
+        </div>
+      </div>`;
+
+      // Details grid
+      html += '<div class="detail-section"><div class="section-title">Details</div><div class="meta-grid">';
+      html += `<div class="meta-cell"><label>Agent</label><span>${esc(memory.agentId)}</span></div>`;
+      html += `<div class="meta-cell"><label>Created</label><span>${new Date(memory.createdAt).toLocaleString()}</span></div>`;
+      html += `<div class="meta-cell"><label>Access Count</label><span>${memory.accessCount}</span></div>`;
+      html += `<div class="meta-cell"><label>Session</label><span>${memory.sessionId || '\u2014'}</span></div>`;
+      if (memory.sourceType) html += `<div class="meta-cell"><label>Source</label><span><span class="prov-tag source">${esc(memory.sourceType)}</span></span></div>`;
+      if (memory.extractionMethod) html += `<div class="meta-cell"><label>Extraction</label><span><span class="prov-tag method">${esc(memory.extractionMethod)}</span></span></div>`;
+      if (memory.confidence !== null && memory.confidence !== undefined) html += `<div class="meta-cell"><label>Confidence</label><span>${confRing(memory.confidence)}</span></div>`;
+      if (memory.validTo) html += `<div class="meta-cell"><label>Valid Until</label><span>${new Date(memory.validTo).toLocaleString()}</span></div>`;
+      if (memory.supersedes) html += `<div class="meta-cell"><label>Supersedes</label><span class="edge-id" onclick="event.stopPropagation();window.__openMemory('${memory.supersedes}')">${memory.supersedes.slice(0,16)}\u2026</span></div>`;
+      html += '</div></div>';
+
+      // Tags
+      if ((memory.tags || []).length > 0) {
+        html += `<div class="detail-section"><div class="section-title">Tags</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap">${memory.tags.map(t => {
+            const cls = t === 'user-confirmed' ? 'confirmed' : t === 'user-corrected' ? 'corrected' : '';
+            return `<span class="tag-pill ${cls}">${esc(t)}</span>`;
+          }).join('')}</div></div>`;
+      }
+
+      // Metadata
+      if (Object.keys(memory.metadata || {}).length > 0) {
+        html += `<div class="detail-section"><div class="section-title">Metadata</div>
+          <div class="detail-content" style="font-size:0.78rem">${esc(JSON.stringify(memory.metadata, null, 2))}</div></div>`;
+      }
+
+      // Version chain
+      if (chain.length > 1) {
+        html += `<div class="detail-section"><div class="section-title">Version History</div><div class="chain">`;
+        chain.forEach(c => {
+          html += `<div class="chain-entry ${c.id === memory.id ? 'current' : ''}">
+            <span class="chain-ver">v${c.version} \u00b7 ${timeAgo(c.createdAt)}</span>
+            <div class="chain-text">${esc(truncate(contentStr(c.content), 120))}</div>
+          </div>`;
+        });
+        html += '</div></div>';
+      }
+
+      // Edges
+      if (edges.length > 0) {
+        html += `<div class="detail-section"><div class="section-title">Relationships</div><div class="edge-list">`;
+        edges.forEach(e => {
+          const targetId = e.sourceId === memory.id ? e.targetId : e.sourceId;
+          html += `<div class="edge-row">
+            <span class="edge-type-tag">${esc(e.edgeType)}</span>
+            <span class="edge-id" onclick="event.stopPropagation();window.__openMemory('${targetId}')">${targetId}</span>
+          </div>`;
+        });
+        html += '</div></div>';
+      }
+
+      // Explain / quality signals
+      if (explain) {
+        html += '<div class="detail-section"><div class="section-title">Quality Signals</div><div class="meta-grid">';
+        html += `<div class="meta-cell"><label>Chain Depth</label><span>${explain.chainDepth}</span></div>`;
+        html += `<div class="meta-cell"><label>Has Summary</label><span style="color:${explain.hasSummary ? 'var(--green)' : 'var(--text-3)'}">${explain.hasSummary ? 'Yes' : 'No'}</span></div>`;
+        html += `<div class="meta-cell"><label>Corrected</label><span style="color:${explain.qualitySignals?.corrected ? 'var(--amber)' : 'var(--text-3)'}">${explain.qualitySignals?.corrected ? 'Yes' : 'No'}</span></div>`;
+        html += `<div class="meta-cell"><label>Confirmed</label><span style="color:${explain.qualitySignals?.confirmed ? 'var(--green)' : 'var(--text-3)'}">${explain.qualitySignals?.confirmed ? 'Yes' : 'No'}</span></div>`;
+        html += `<div class="meta-cell"><label>Contradiction</label><span style="color:${explain.qualitySignals?.contradictionCandidate ? 'var(--red)' : 'var(--text-3)'}">${explain.qualitySignals?.contradictionCandidate ? 'Yes' : 'No'}</span></div>`;
+        if (explain.query) {
+          html += `<div class="meta-cell"><label>Similarity</label><span style="color:var(--accent);font-weight:600">${Number(explain.query.similarity || 0).toFixed(4)}</span></div>`;
+        }
+        html += '</div></div>';
+      }
+
+      html += '</div>'; // modal-body end
+
+      // Actions
+      html += '<div class="modal-actions">';
+      if (memory.status === 'active') {
+        html += `<button class="btn btn-danger" onclick="document.getElementById('delete-confirm').classList.add('visible')">Delete</button>`;
+        html += `<button class="btn btn-edit" onclick="window.__startEdit()">Correct</button>`;
+        if (!(memory.tags || []).includes('user-confirmed')) {
+          html += `<button class="btn btn-confirm-action" onclick="window.__confirmMemory('${memory.id}')">Confirm</button>`;
+        }
+      }
+      html += '</div>';
+
+      panel.innerHTML = html;
+    } catch (err) {
+      toast(err.message, 'error');
+      closeModal();
+    }
+  }
+
+  function closeModal() { document.getElementById('modal-bg').classList.remove('open'); }
+
+  // ── Actions ──
+  function startEdit() {
+    document.getElementById('edit-area').classList.add('visible');
+    document.getElementById('detail-content').style.display = 'none';
+    document.getElementById('edit-textarea').focus();
+  }
+
+  function cancelEdit() {
+    document.getElementById('edit-area').classList.remove('visible');
+    document.getElementById('detail-content').style.display = '';
+  }
+
+  async function saveCorrection(id) {
+    const content = document.getElementById('edit-textarea').value.trim();
+    if (!content) return;
+    try {
+      await api('/api/memories/' + encodeURIComponent(id), { method: 'PUT', body: JSON.stringify({ content }) });
+      toast('Memory corrected');
+      closeModal();
+      await refresh();
+    } catch (err) { toast(err.message, 'error'); }
+  }
+
+  async function confirmMemoryAction(id) {
+    try {
+      await api('/api/memories/' + encodeURIComponent(id) + '/confirm', { method: 'POST' });
+      toast('Memory confirmed');
+      closeModal();
+      await refresh();
+    } catch (err) { toast(err.message, 'error'); }
+  }
+
+  async function confirmDelete(id) {
+    try {
+      await api('/api/memories/' + encodeURIComponent(id), { method: 'DELETE' });
+      toast('Memory deleted');
+      closeModal();
+      await refresh();
+    } catch (err) { toast(err.message, 'error'); }
+  }
+
+  // ── Search ──
+  async function doSearch(query) {
+    if (!query.trim()) { await refresh(); return; }
+    try {
+      const result = await api('/api/search', { method: 'POST', body: JSON.stringify({ query }) });
+      allMemories = result.memories || [];
+      renderView();
+    } catch (err) { toast(err.message, 'error'); }
+  }
+
+  // ── Export ──
+  async function exportJson() {
+    try {
+      toast('Exporting...');
+      const data = await api('/api/export');
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'db0-export-' + new Date().toISOString().slice(0, 10) + '.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      toast('Exported ' + (data.memories || []).length + ' memories (with embeddings & edges)');
+    } catch (err) { toast(err.message, 'error'); }
+  }
+
+  function triggerImport() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async function() {
+      const file = input.files[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        if (!data.memories || !Array.isArray(data.memories)) {
+          toast('Invalid export file — missing memories array', 'error');
+          return;
+        }
+        if (!confirm('Import ' + data.memories.length + ' memories from ' + file.name + '?\n\nExisting memories with the same ID will be skipped.')) return;
+        toast('Importing...');
+        const result = await api('/api/import', { method: 'POST', body: JSON.stringify(data) });
+        toast('Imported ' + result.imported + ' memories, ' + result.skipped + ' skipped, ' + result.edges + ' edges');
+        await refresh();
+      } catch (err) { toast(err.message, 'error'); }
+    };
+    input.click();
+  }
+
+  // ── Data load ──
+  async function refresh() {
+    try {
+      const [statsData, listData, runtimeData] = await Promise.all([
+        api('/api/stats'),
+        api('/api/memories?limit=500'),
+        api('/api/runtime').catch(() => null),
+      ]);
+      stats = statsData;
+      allMemories = listData.memories || [];
+      runtime = runtimeData;
+      integrity = null; // reset so it re-fetches when viewed
+      renderTopbarStats();
+      renderSidebarNav();
+      renderRuntime();
+      renderView();
+    } catch (err) {
+      document.getElementById('main').innerHTML = `<div class="empty-state">
+        <div class="empty-icon">!</div>
+        <div class="empty-title">Connection Error</div>
+        <div class="empty-sub">${esc(err.message)}</div>
+      </div>`;
+    }
+  }
+
+  // ── Global handlers ──
+  window.__openMemory = openMemory;
+  window.__closeModal = closeModal;
+  window.__startEdit = startEdit;
+  window.__cancelEdit = cancelEdit;
+  window.__saveCorrection = saveCorrection;
+  window.__confirmMemory = confirmMemoryAction;
+  window.__confirmDelete = confirmDelete;
+  window.__export = exportJson;
+  window.__import = triggerImport;
+
+  window.__switchAgent = async function(newAgentId) {
+    try {
+      await api('/api/switch-agent', { method: 'POST', body: JSON.stringify({ agentId: newAgentId }) });
+      toast('Switched to agent: ' + newAgentId);
+      integrity = null;
+      await refresh();
+    } catch (err) { toast(err.message, 'error'); }
+  };
+
+  window.__purgeSuperseded = async function() {
+    const count = stats.byStatus?.superseded || 0;
+    if (count === 0) return;
+    if (!confirm('Permanently delete ' + count + ' superseded memories?\n\nThis removes version history and cannot be undone.')) return;
+    try {
+      toast('Purging...');
+      const superseded = allMemories.filter(m => m.status === 'superseded');
+      let deleted = 0;
+      for (const m of superseded) {
+        await api('/api/memories/' + encodeURIComponent(m.id), { method: 'DELETE' });
+        deleted++;
+      }
+      toast('Purged ' + deleted + ' superseded memories');
+      await refresh();
+    } catch (err) { toast(err.message, 'error'); }
+  };
+
+  // ── Inline edit on cards ──
+  window.__inlineEdit = function(id) {
+    const mem = allMemories.find(m => m.id === id);
+    if (!mem) return;
+    const slot = document.getElementById('inline-edit-' + id);
+    const contentEl = document.getElementById('content-' + id);
+    if (!slot || !contentEl) return;
+    contentEl.style.display = 'none';
+    slot.innerHTML = `<div class="inline-edit">
+      <textarea id="inline-textarea-${id}">${esc(contentStr(mem.content))}</textarea>
+      <div class="inline-edit-actions">
+        <button class="inline-save" onclick="event.stopPropagation();window.__inlineSave('${id}')">Save</button>
+        <button class="inline-cancel" onclick="event.stopPropagation();window.__inlineCancel('${id}')">Cancel</button>
+      </div>
+    </div>`;
+    const ta = document.getElementById('inline-textarea-' + id);
+    if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+  };
+
+  window.__inlineCancel = function(id) {
+    const slot = document.getElementById('inline-edit-' + id);
+    const contentEl = document.getElementById('content-' + id);
+    if (slot) slot.innerHTML = '';
+    if (contentEl) contentEl.style.display = '';
+  };
+
+  window.__inlineSave = async function(id) {
+    const ta = document.getElementById('inline-textarea-' + id);
+    if (!ta) return;
+    const content = ta.value.trim();
+    if (!content) return;
+    try {
+      await api('/api/memories/' + encodeURIComponent(id), { method: 'PUT', body: JSON.stringify({ content }) });
+      toast('Memory corrected');
+      await refresh();
+    } catch (err) { toast(err.message, 'error'); }
+  };
+
+  window.__quickConfirm = async function(id) {
+    try {
+      await api('/api/memories/' + encodeURIComponent(id) + '/confirm', { method: 'POST' });
+      toast('Memory confirmed');
+      await refresh();
+    } catch (err) { toast(err.message, 'error'); }
+  };
+
+  window.__quickDelete = async function(id) {
+    if (!confirm('Delete this memory? This cannot be undone.')) return;
+    try {
+      await api('/api/memories/' + encodeURIComponent(id), { method: 'DELETE' });
+      toast('Memory deleted');
+      await refresh();
+    } catch (err) { toast(err.message, 'error'); }
+  };
+
+  window.__setFilter = function(type, value) {
+    filters[type] = value;
+    renderSidebarNav();
+    renderView();
+  };
+
+  window.__setTime = function(days) {
+    timeRange = days;
+    renderView();
+  };
+
+  // Navigate from dashboard chart to memories with a filter
+  window.__dashNav = function(filterType, value) {
+    // Reset all filters then set the one clicked
+    filters = { scope: null, status: null, sourceType: null, extractionMethod: null };
+    if (filterType && value !== null && value !== 'null') {
+      filters[filterType] = value;
+    }
+    switchView('memories');
+    renderSidebarNav();
+  };
+
+  // ── View tabs ──
+  document.getElementById('view-nav').addEventListener('click', function(e) {
+    const tab = e.target.closest('.view-nav-item');
+    if (tab) switchView(tab.dataset.view);
+  });
+
+  // ── Search ──
+  document.getElementById('search').addEventListener('input', function(e) {
+    clearTimeout(searchTimeout);
+    searchQuery = e.target.value;
+    searchTimeout = setTimeout(() => doSearch(searchQuery), 350);
+  });
+
+  // ── Modal close ──
+  document.getElementById('modal-bg').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeModal();
+  });
+
+  // ── Keyboard shortcut: / focuses search ──
+  document.addEventListener('keydown', function(e) {
+    if (e.key === '/' && !e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      document.getElementById('search').focus();
+    }
+  });
+
+  // ── Init ──
+  refresh();
+})();
+</script>
+</body>
+</html>

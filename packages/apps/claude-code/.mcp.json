@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "db0": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/dist/server.js"],
+      "env": {
+        "DB0_STORAGE": "${DB0_STORAGE:-}",
+        "DB0_AGENT_ID": "${DB0_AGENT_ID:-claude-code}"
+      }
+    }
+  }
+}

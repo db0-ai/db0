@@ -1,0 +1,13 @@
+{
+  "plugins": [
+    {
+      "name": "db0",
+      "description": "Agent-native memory, state, and logging for Claude Code — scoped memory with superseding, semantic search, state checkpoints, and structured logging.",
+      "version": "0.1.0",
+      "source": {
+        "type": "directory",
+        "path": "packages/apps/claude-code"
+      }
+    }
+  ]
+}

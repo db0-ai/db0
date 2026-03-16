@@ -1,0 +1,7 @@
+<svg width="72" height="66" viewBox="0 0 72 66" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- old abstractions: ghost outlines only -->
+  <rect x="20" y="36" width="48" height="22" rx="3" fill="none" stroke="#1c2535" stroke-width="2"/>
+  <rect x="10" y="22" width="48" height="22" rx="3" fill="none" stroke="#243040" stroke-width="2"/>
+  <!-- db0: new abstraction, solid green -->
+  <rect x="0"  y="8"  width="48" height="22" rx="3" fill="#00ff88"/>
+</svg>

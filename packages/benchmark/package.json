@@ -1,0 +1,35 @@
+{
+  "name": "@db0-ai/benchmark",
+  "version": "0.2.0",
+  "description": "Memory quality benchmarks for db0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "bench": "tsx src/cli.ts",
+    "bench:locomo": "tsx src/cli.ts --suite locomo",
+    "bench:recall": "tsx src/cli.ts --suite recall",
+    "bench:features": "tsx src/cli.ts --suite features",
+    "bench:mr-niah": "tsx src/cli.ts --suite mr-niah",
+    "bench:mr-niah-fetch": "bash scripts/fetch-mr-niah.sh",
+    "bench:longmemeval": "tsx src/cli.ts --suite longmemeval",
+    "bench:longmemeval-fetch": "bash scripts/fetch-longmemeval.sh"
+  },
+  "dependencies": {
+    "@db0-ai/core": "0.2.0",
+    "@db0-ai/backends-sqlite": "0.2.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0",
+    "typescript": "^5.7.0"
+  },
+  "peerDependencies": {
+    "@db0-ai/backends-postgres": "0.2.0"
+  },
+  "peerDependenciesMeta": {
+    "@db0-ai/backends-postgres": {
+      "optional": true
+    }
+  }
+}

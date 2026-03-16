@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')); if(d.message) process.stdout.write(JSON.stringify({decision:'allow'}))\""
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "name": "@db0-ai/claude-code",
+  "version": "0.2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "db0-mcp-server": "./dist/server.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "files": [
+    "dist",
+    ".claude-plugin",
+    "skills",
+    "hooks"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@db0-ai/core": "0.2.0",
+    "@db0-ai/backends-sqlite": "0.2.0",
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  }
+}

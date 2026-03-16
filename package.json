@@ -1,0 +1,31 @@
+{
+  "name": "db0-monorepo",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/core",
+    "packages/backends/sqlite",
+    "packages/backends/postgres",
+    "packages/apps/openclaw",
+    "packages/apps/claude-code",
+    "packages/inspector",
+    "packages/cli",
+    "packages/benchmark"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "./scripts/publish.sh",
+    "release:dry": "./scripts/publish.sh --dry-run"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.30.0",
+    "@types/debug": "^4.1.12",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}
