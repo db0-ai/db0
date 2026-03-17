@@ -11,8 +11,6 @@
     "bench:locomo": "tsx src/cli.ts --suite locomo",
     "bench:recall": "tsx src/cli.ts --suite recall",
     "bench:features": "tsx src/cli.ts --suite features",
-    "bench:mr-niah": "tsx src/cli.ts --suite mr-niah",
-    "bench:mr-niah-fetch": "bash scripts/fetch-mr-niah.sh",
     "bench:longmemeval": "tsx src/cli.ts --suite longmemeval",
     "bench:longmemeval-fetch": "bash scripts/fetch-longmemeval.sh"
   },

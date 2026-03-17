@@ -4,4 +4,3 @@ export { PhraseMatchMetric } from "./phrase-match.js";
 export { RetrievalCoverageMetric, TopKHitRate } from "./retrieval-coverage.js";
 export { LlmJudgeMetric, createGeminiJudge, createGeminiAnswerGenerator, createGeminiFactExtractor } from "./llm-judge.js";
 export type { LlmJudgeOptions } from "./llm-judge.js";
-export { MrNiahScoreMetric } from "./mr-niah-score.js";
