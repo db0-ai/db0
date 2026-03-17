@@ -10,10 +10,8 @@ import { TokenF1Metric } from "./metrics/token-f1.js";
 import { LlmJudgeMetric, createGeminiJudge, createGeminiAnswerGenerator, createGeminiFactExtractor, createOpenAIJudge, createOpenAIAnswerGenerator } from "./metrics/llm-judge.js";
 import { runBenchmark } from "./runners/runner.js";
 import { formatReport, exportReportJSON } from "./runners/reporter.js";
-import { MrNiahScoreMetric } from "./metrics/mr-niah-score.js";
 import { createRecallDataset, runFeatureBenchmark } from "./suites/index.js";
 import { loadLoCoMoDataset } from "./suites/locomo.js";
-import { loadMrNiahDataset, listMrNiahFiles, MR_NIAH_TOKEN_BUCKETS } from "./suites/mr-niah.js";
 import { loadLongMemEval, longMemEvalToDataset, LONGMEMEVAL_CATEGORIES } from "./suites/longmemeval.js";
 import type { QueryResult, CategoryResult, BenchmarkReport } from "./types.js";
 import { PROFILES } from "@db0-ai/core";
@@ -330,100 +328,6 @@ async function main() {
     }
   }
 
-  if (suite === "mr-niah") {
-    if (embeddingProvider === "hash") {
-      console.warn("  Warning: hash embeddings will give poor MR-NIAH results. Use --embeddings gemini for meaningful scores.");
-    }
-
-    // Parse options
-    const languages = (getArg(args, "--lang") ?? "english").split(",") as Array<"english" | "chinese">;
-    const bucketsArg = getArg(args, "--buckets");
-    const tokenBuckets = bucketsArg
-      ? bucketsArg.split(",").map(Number)
-      : undefined; // use default (5 smallest)
-    const maxPerFile = Number(getArg(args, "--samples") || "0") || undefined;
-    const ingestMode = (getArg(args, "--ingest") ?? "turn") as "turn" | "session" | "chunk" | "turn-context" | "dual";
-    const useRerank = args.includes("--rerank");
-    const useEnrich = args.includes("--enrich");
-    const useExpand = args.includes("--expand");
-    const enrichMode = (getArg(args, "--enrich-mode") ?? "augment") as "augment" | "rewrite";
-    const useLatentBridging = args.includes("--latent-bridging");
-
-    // Check data availability
-    const available = listMrNiahFiles();
-    if (available.length === 0) {
-      console.error("  MR-NIAH data not found. Download with:");
-      console.error("    bash packages/benchmark/scripts/fetch-mr-niah.sh");
-      process.exit(1);
-    }
-    console.log(`\n  MR-NIAH data: ${available.length} files available`);
-
-    const dataset = loadMrNiahDataset({ languages, tokenBuckets, maxSamplesPerFile: maxPerFile });
-    console.log(`\n  Running: MR-NIAH Benchmark (${dataset.sessions.length} conversations, ${dataset.queries.length} queries)`);
-    console.log(`  Config: lang=${languages.join(",")}, ingest=${ingestMode}, rerank=${useRerank}, enrich=${useEnrich}${useEnrich ? `(${enrichMode})` : ""}, expand=${useExpand}, latentBridging=${useLatentBridging}\n`);
-
-    // For MR-NIAH, we need an answer generator to produce verbatim recall
-    const apiKey = process.env.GEMINI_API_KEY;
-    const generateAnswer = apiKey ? createMrNiahAnswerGenerator(apiKey) : null;
-
-    const baseAdapter = new Db0Adapter({
-      createBackend: () => createSqliteBackend({ dbPath: ":memory:" }),
-      embeddingFn,
-      scoring: "hybrid",
-      minScore: 0.1,
-      ingestMode,
-      chunkSize: 800,
-      chunkOverlap: 200,
-      ...(useRerank && apiKey ? { rerankFn: createGeminiReranker(apiKey) } : {}),
-      ...(useEnrich && apiKey ? { enrichFn: createGeminiChunkEnricher(apiKey, enrichMode), enrichMode } : {}),
-      ...(useExpand && apiKey ? { queryExpandFn: createGeminiQueryExpander(apiKey) } : {}),
-      ...(useLatentBridging ? { latentBridging: true } : {}),
-    });
-
-    // Wrap query to set generatedAnswer for scoring.
-    // MR-NIAH tests retrieval quality — can the system find the needle?
-    // Default to raw retrieval for MR-NIAH (tests retrieval quality directly).
-    // Use --llm-answer to enable LLM verbatim reproduction (tests end-to-end).
-    const useRawRetrieval = !args.includes("--llm-answer");
-    const originalQuery = baseAdapter.query.bind(baseAdapter);
-    baseAdapter.query = async (queryText: string, limit?: number) => {
-      const exec = await originalQuery(queryText, limit);
-      const topResults = exec.results.slice(0, ingestMode === "session" ? exec.results.length : 5);
-      const context = topResults.map((r) => r.content).join("\n\n---\n\n");
-
-      if (!useRawRetrieval && generateAnswer && context.trim()) {
-        exec.generatedAnswer = await generateAnswer(queryText, context);
-      } else {
-        // Score against raw retrieved content directly
-        exec.generatedAnswer = context;
-      }
-      return exec;
-    };
-
-    const report = await runBenchmark({
-      adapter: baseAdapter,
-      dataset,
-      queryLimit: 15,
-      metrics: [
-        new MrNiahScoreMetric(),
-        new TokenF1Metric(),
-        new RetrievalCoverageMetric(),
-        new TopKHitRate(3),
-        new TopKHitRate(5),
-      ],
-      onProgress: (completed, total, queryId) => {
-        process.stdout.write(`\r  Progress: ${completed}/${total} (${queryId})      `);
-      },
-    });
-
-    process.stdout.write("\r" + " ".repeat(60) + "\r");
-
-    if (outputJson) {
-      console.log(exportReportJSON(report));
-    } else {
-      console.log(formatReport(report));
-    }
-  }
 }
 
 /**
@@ -520,48 +424,6 @@ Reformulations:`;
       .filter((l) => l.length > 5);
 
     return reformulations.slice(0, 3);
-  };
-}
-
-/**
- * MR-NIAH answer generator — asks the LLM to repeat the exact content from context.
- * The key is instructing verbatim reproduction, not summarization.
- */
-function createMrNiahAnswerGenerator(apiKey: string) {
-  return async (question: string, retrievedContext: string): Promise<string> => {
-    const prompt = `You are helping recall exact content from past conversations.
-
-Context from past conversations:
-${retrievedContext}
-
-Question: ${question}
-
-INSTRUCTIONS:
-1. Find the requested content (poem, list, description, etc.) in the context above.
-2. Reproduce it EXACTLY and VERBATIM — every word, every line, including punctuation and formatting.
-3. Do NOT paraphrase, summarize, reformat, or change any wording.
-4. IGNORE ordinal references like "first", "second", "third" — there is only one matching piece of content in the context. Just find and reproduce it.
-5. Do NOT add quotes, headers, labels, or any extra text. Output ONLY the requested content.
-
-Answer:`;
-
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0, maxOutputTokens: 500 },
-        }),
-      },
-    );
-
-    const data = (await res.json()) as {
-      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-    };
-
-    return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
   };
 }
 
