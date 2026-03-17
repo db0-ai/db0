@@ -7,23 +7,17 @@ npm workspaces monorepo under `@db0-ai/*` scope:
 - `packages/backends/sqlite` — SQLite backend (sql.js, in-JS cosine similarity)
 - `packages/backends/postgres` — PostgreSQL + pgvector backend
 - `packages/apps/openclaw` — OpenClaw ContextEngine plugin (zero-config entry point)
+- `packages/apps/claude-code` — Claude Code MCP server, skills, hooks
+- `packages/inspector` — web UI for browsing memory, state, and logs
+- `packages/cli` — CLI for memory operations
+- `packages/benchmark` — memory quality benchmarks
 
 ## Testing
 
 Run all tests: `npx vitest run`
 
-### Local PostgreSQL Test Environment
+PostgreSQL tests require `DB0_POSTGRES_URL` env var. Without it, postgres tests are skipped automatically.
 
-PostgreSQL 17 installed via Homebrew with pgvector extension:
-- Service: `brew services start/stop postgresql@17`
-- Binary path: `/opt/homebrew/opt/postgresql@17/bin/`
-- Test database: `db0_test` (created with `createdb db0_test`)
-- pgvector enabled in `db0_test`
-- Connection string: `postgresql://localhost/db0_test`
-
-Run tests including postgres:
 ```bash
 DB0_POSTGRES_URL="postgresql://localhost/db0_test" npx vitest run
 ```
-
-Without `DB0_POSTGRES_URL`, postgres tests are skipped automatically.
