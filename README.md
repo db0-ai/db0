@@ -50,6 +50,10 @@ npm install @db0-ai/core @db0-ai/backends-sqlite
 **Write memory with scope** — user-scoped facts persist across all sessions:
 
 ```typescript
+import { db0 } from "@db0-ai/core";
+import { createSqliteBackend } from "@db0-ai/backends-sqlite";
+
+const backend = await createSqliteBackend();
 const harness = db0.harness({ agentId: "main", sessionId: "s1", userId: "user-1", backend });
 
 await harness.memory().write({

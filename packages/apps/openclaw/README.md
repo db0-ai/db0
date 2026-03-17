@@ -1,16 +1,22 @@
 # @db0-ai/openclaw
 
-OpenClaw's built-in memory is a flat file that gets silently truncated when the context window overflows. Facts vanish during compaction, there's no scoping between projects, and sub-agents can't share what they've learned.
+Your OpenClaw agent forgets things it shouldn't. You told it your preferences three sessions ago — gone. A sub-agent spent 10 minutes researching — the parent never saw the results. You switched projects and yesterday's context bled into today's work.
 
-db0 replaces that with a real memory system — scoped, versioned, and persistent. Facts are extracted every turn (not just at compaction), scoped so they don't leak across projects, and preserved with full audit trail when they're corrected. Sub-agents share memory through the same database instead of lossy text extraction.
+db0 is a ContextEngine plugin that gives your agent memory that actually works — across sessions, between agents, and across projects.
 
-## Install
+## Quick Start
+
+```bash
+openclaw plugins install @db0-ai/openclaw
+```
+
+Or use the interactive installer for more options:
 
 ```bash
 npx @db0-ai/openclaw init
 ```
 
-One command. Sets up persistent SQLite storage, configures `openclaw.json`, and activates db0 as the context engine. Restart OpenClaw to activate.
+Both set up persistent SQLite storage, configure `openclaw.json`, and activate db0 as the context engine. Restart OpenClaw to activate.
 
 **Requires OpenClaw v2026.3.7 or later.**
 
@@ -20,16 +26,14 @@ Or tell your OpenClaw agent:
 
 ## What You Get
 
-Out of the box, with no further configuration:
+Out of the box, zero configuration:
 
-- **Persistent memory** stored in `~/.openclaw/db0.sqlite`
-- **Automatic fact extraction** from every conversation turn
-- **Scoped recall** — relevant memories injected into context before each LLM call
-- **Memory superseding** — stale facts corrected, not deleted
-- **Sub-agent support** — shared memory with automatic isolation
-- **State checkpoints** — restorable execution state with branching
-- **Compaction safety** — facts extracted from messages before they're discarded
-- **Structured logging** — full audit trail of turns, extractions, and compaction
+- **Your agent remembers** — preferences, decisions, and context persist across sessions
+- **Facts stay current** — when things change, old facts are superseded, not duplicated
+- **Projects stay separate** — scoped memory prevents cross-project contamination
+- **Sub-agents collaborate** — parent and child share memory automatically
+- **Nothing is lost to compaction** — facts are extracted before messages are discarded
+- **You can see what it knows** — inspector UI, CLI, and structured logs for full visibility
 
 ## Upgrade Embeddings
 
@@ -55,7 +59,7 @@ npx @db0-ai/openclaw set embeddings ollama
 
 When the provider changes, existing memories are re-embedded automatically.
 
-## Inspect Your Memory
+## Inspector
 
 ```bash
 npx @db0-ai/inspector
