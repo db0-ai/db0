@@ -94,6 +94,37 @@ npx @db0-ai/openclaw restore
 npx @db0-ai/openclaw restore --force
 ```
 
+### Inspector UI
+
+Browse, search, and manage your agent's memories in a web UI:
+
+```bash
+npx @db0-ai/inspector
+```
+
+Opens at `http://127.0.0.1:6460`. Auto-detects your `db0.sqlite` from `~/.openclaw/`.
+
+The inspector has three views:
+
+- **Memories** — browse and filter by scope, status, source, extraction method. Semantic search, confidence badges, detail modal with version history and relationships.
+- **Dashboard** — charts showing memory distribution by scope, extraction method, source type, and confidence.
+- **Health** — integrity report surfacing contradiction candidates, missing summaries, and orphaned edges.
+
+Options:
+
+```bash
+# Custom database path
+npx @db0-ai/inspector --db /path/to/db0.sqlite
+
+# Custom port
+npx @db0-ai/inspector --port 8080
+
+# Specific agent
+npx @db0-ai/inspector --agent my-agent
+```
+
+See [@db0-ai/inspector](../../inspector) for full documentation.
+
 ### Recommended Configuration
 
 For most users, db0 works out of the box with zero config. If you want semantic search (instead of exact-match hash embeddings), set one environment variable:
