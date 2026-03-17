@@ -114,6 +114,10 @@ npx @db0-ai/openclaw upgrade claude-code      # upgrade
 npx @db0-ai/openclaw uninstall claude-code     # uninstall
 ```
 
+## Documentation
+
+- [Comparison with other Claude Code memory tools](docs/comparison.md)
+
 ## Part of db0
 
 This MCP server is one entry point to the db0 SDK. The same memory database works with the [core SDK](../../core), [OpenClaw plugin](../openclaw), [CLI](../../cli), and [inspector](../../inspector).
