@@ -113,40 +113,39 @@ GEMINI_API_KEY=your-key npm run bench:longmemeval -- --embeddings gemini --types
 
 ## Results
 
-### LoCoMo (Gemini embeddings, 1 sample, 199 queries)
+All results use Gemini embeddings (`gemini-embedding-001`) and Gemini Flash for LLM judging and answer generation.
 
-| Configuration | LLM Judge |
-|---|---|
-| **session** | **76.9%** |
-| chunk + augment enrich | 69.3% |
-| chunk baseline | 57.8% |
+### LoCoMo
 
-**vs. published benchmarks:**
+Session ingest, hybrid scoring, 1 sample (199 queries).
 
 | System | LLM Judge |
 |---|---|
 | ByteRover | 92.2% |
-| **db0 (session)** | **76.9%** |
+| **db0** | **76.9%** |
 | Mem0 | 66.9% |
 | Zep | 21.3% |
 
-### LongMemEval-s (OpenAI embeddings, conversational profile)
+| Category | n | LLM Judge |
+|---|---|---|
+| Multi-hop temporal | 37 | 86.5% |
+| Unanswerable | 47 | 85.1% |
+| Multi-session | 70 | 84.3% |
+| Open-domain | 13 | 61.5% |
+| Single-hop | 32 | 43.8% |
 
-| Category | n | LLM Judge | Coverage |
-|---|---|---|---|
-| single-session-assistant | 56 | **98.2%** | 55.4% |
-| knowledge-update | 78 | **64.1%** | 60.3% |
-| temporal-reasoning | 133 | 57.1% | 24.8% |
-| single-session-user | 70 | 57.1% | 44.3% |
-| multi-session | 62 | 45.2% | 43.5% |
+### LongMemEval-s
 
-**vs. published benchmarks:** Zep 71.2%, Full Context GPT-4o 63.8%, Mem0 29%.
+Conversational profile, session ingest, hybrid scoring.
 
-### Key Findings
+| System | LLM Judge |
+|---|---|
+| **db0** | **80.0%** |
+| Zep | 71.2% |
+| Full Context GPT-4o | 63.8% |
+| Mem0 | 29% |
 
-- **Augment enrichment** is the biggest single improvement for chunk mode (+11.5pp), resolving temporal references that chunks lose.
-- **Rewrite enrichment** destroys conversational context — avoid for chat workloads.
-- **Session mode** outperforms chunk mode on LoCoMo — full conversational context matters more than granular retrieval for this dataset.
+db0 scores based on a 50-question sample with Gemini embeddings. Published scores from [LongMemEval paper](https://arxiv.org/abs/2410.10813).
 
 ## Programmatic Usage
 
