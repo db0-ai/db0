@@ -2,7 +2,7 @@
 
 ## The Problem
 
-Pi is a coding agent with no built-in cross-session memory. Close the session and everything is gone — preferences, project patterns, solutions to bugs you've already fixed. AGENTS.md gives you static instructions, but it doesn't learn from conversations.
+[Pi](https://github.com/badlogic/pi-mono) is an AI agent toolkit — coding agent CLI, unified LLM API, TUI & web UI libraries. Its coding agent is powerful, but has no built-in cross-session memory. Close the session and everything is gone — preferences, project patterns, solutions to bugs you've already fixed. AGENTS.md gives you static instructions, but it doesn't learn from conversations.
 
 This has led developers to build their own memory extensions ([pi-hippocampus](https://github.com/lebonbruce/pi-hippocampus), [pi-memory](https://github.com/jayzeng/pi-memory), and others). The underlying issues:
 
