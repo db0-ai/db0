@@ -1,10 +1,14 @@
 # @db0-ai/ai-sdk
 
-The [AI SDK](https://ai-sdk.dev) makes it easy to call LLMs. But every call is stateless — your app forgets everything the moment the response ends. Users repeat their preferences, agents lose context between sessions, and you end up building custom memory plumbing for every project.
+The [AI SDK](https://ai-sdk.dev) is stateless by design. Every `generateText` call starts from zero — no memory of past conversations, no way to recall what the user said yesterday. The SDK's own [memory docs](https://ai-sdk.dev/docs/agents/memory) acknowledge this gap and point to third-party services.
 
-`@db0-ai/ai-sdk` adds persistent memory to any AI SDK model as a middleware. Facts are extracted automatically from conversations, stored in a local SQLite database (or Postgres for production), and injected back into the prompt when relevant — all without extra LLM calls.
+In practice, this means:
 
-One line to add, nothing to maintain.
+- **Users repeat themselves.** "I told you my name last session" — but the model has no idea.
+- **Every team builds the same glue.** Persistence is the [#1 recurring pain](https://github.com/vercel/ai/discussions/4845) in the AI SDK community. Multiple message formats, streaming race conditions, no reference implementation.
+- **Long conversations break.** The full message history is sent on every request. No built-in compaction, no context window management. Conversations over 150 messages require custom summarization.
+
+`@db0-ai/ai-sdk` solves this as a middleware. Wrap any model — facts are extracted from conversations automatically (zero LLM calls), stored in SQLite or Postgres, and injected back into the prompt when relevant.
 
 ## Quick Start
 
