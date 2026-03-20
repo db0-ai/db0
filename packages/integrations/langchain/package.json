@@ -1,0 +1,29 @@
+{
+  "name": "@db0-ai/langchain",
+  "version": "0.2.0",
+  "description": "db0 memory integration for LangChain.js — persistent memory tools and chat history",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "files": [
+    "dist"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@db0-ai/core": "0.2.0",
+    "@db0-ai/backends-sqlite": "0.2.0"
+  },
+  "peerDependencies": {
+    "@langchain/core": ">=0.3.0",
+    "zod": ">=3.0.0"
+  }
+}

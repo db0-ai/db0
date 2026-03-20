@@ -10,6 +10,9 @@
     "packages/apps/claude-code",
     "packages/inspector",
     "packages/cli",
+    "packages/integrations/ai-sdk",
+    "packages/integrations/langchain",
+    "packages/integrations/pi",
     "packages/benchmark"
   ],
   "scripts": {
@@ -24,9 +27,13 @@
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
     "@changesets/cli": "^2.30.0",
+    "@langchain/core": "^1.1.34",
+    "@langchain/langgraph": "^1.2.4",
     "@types/debug": "^4.1.12",
     "@types/node": "^22.0.0",
+    "ai": "^6.0.116",
     "typescript": "^5.7.0",
-    "vitest": "^3.0.0"
+    "vitest": "^3.0.0",
+    "zod": "^4.3.6"
   }
 }

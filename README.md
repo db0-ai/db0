@@ -109,36 +109,70 @@ Persistent memory, automatic fact extraction, sub-agent support. See [packages/a
 
 **Claude Code** — MCP server with skills and hooks. See [packages/apps/claude-code](packages/apps/claude-code).
 
+**AI SDK** — memory middleware for the [Vercel AI SDK](https://ai-sdk.dev). Wraps any model with `wrapLanguageModel()`:
+
+```typescript
+import { wrapLanguageModel } from "ai";
+import { createDb0 } from "@db0-ai/ai-sdk";
+
+const memory = await createDb0();
+const model = wrapLanguageModel({ model: yourModel, middleware: memory.middleware });
+```
+
+Works with any provider (Anthropic, OpenAI, Google). See [packages/integrations/ai-sdk](packages/integrations/ai-sdk).
+
+**LangChain.js** — memory tools and chat history for LangChain agents:
+
+```typescript
+import { createDb0 } from "@db0-ai/langchain";
+
+const memory = await createDb0();
+const agent = createReactAgent({ llm, tools: [...memory.tools] });
+```
+
+Replaces deprecated `BufferMemory` with scoped, persistent memory. See [packages/integrations/langchain](packages/integrations/langchain).
+
+**Pi** — memory extension for the [Pi coding agent](https://github.com/badlogic/pi-mono). See [packages/integrations/pi](packages/integrations/pi).
+
 ## Architecture
 
 ```
-  ┌──────────────────────────────────────────────────────────┐
-  │  Applications                                            │
-  │                                                          │
-  │  ┌──────────┐   ┌─────────────┐   ┌──────────────────┐  │
-  │  │ OpenClaw │   │ Claude Code │   │    Your Agent    │  │
-  │  └──────────┘   └─────────────┘   └──────────────────┘  │
-  └──────────────────────────┬───────────────────────────────┘
-                             │
-  ┌──────────────────────────▼───────────────────────────────┐
-  │  db0 Core                                                │
-  │                                                          │
-  │  ┌────────┐  ┌─────────┐  ┌───────┐  ┌─────┐  ┌──────┐ │
-  │  │ Memory │  │ Context │  │ State │  │ Log │  │Spawn │ │
-  │  └────────┘  └─────────┘  └───────┘  └─────┘  └──────┘ │
-  │                                                          │
-  │  ┌──────────┐  ┌────────────┐  ┌────────────┐           │
-  │  │ Profiles │  │ Extraction │  │ Embeddings │           │
-  │  └──────────┘  └────────────┘  └────────────┘           │
-  └──────────────────────────┬───────────────────────────────┘
-                             │
-  ┌──────────────────────────▼───────────────────────────────┐
-  │  Backend Interface                                       │
-  │                                                          │
-  │  ┌────────────────┐       ┌────────────────────────────┐ │
-  │  │ SQLite (sql.js) │       │ PostgreSQL + pgvector     │ │
-  │  └────────────────┘       └────────────────────────────┘ │
-  └──────────────────────────────────────────────────────────┘
+  ┌─────────────────────────────────────────────────────┐
+  │  Apps & Integrations                                │
+  │                                                     │
+  │  ┌──────────┐ ┌─────────────┐ ┌────────┐           │
+  │  │ OpenClaw │ │ Claude Code │ │ AI SDK │           │
+  │  └──────────┘ └─────────────┘ └────────┘           │
+  │  ┌───────────┐ ┌──────┐                            │
+  │  │ LangChain │ │  Pi  │                            │
+  │  └───────────┘ └──────┘                            │
+  └─────────────────────┬───────────────────────────────┘
+                        │
+  ┌─────────────────────▼──────────────┐ ┌──────────────┐
+  │  db0 Core                          │ │  Tools       │
+  │                                    │ │              │
+  │  ┌────────┐ ┌─────────┐ ┌───────┐ │ │ ┌──────────┐│
+  │  │ Memory │ │ Context │ │ State │ │ │ │Inspector ││
+  │  └────────┘ └─────────┘ └───────┘ │ │ └──────────┘│
+  │  ┌─────┐ ┌───────┐                │ │ ┌──────────┐│
+  │  │ Log │ │ Spawn │                │ │ │   CLI    ││
+  │  └─────┘ └───────┘                │ │ └──────────┘│
+  │                                    │ │ ┌──────────┐│
+  │  ┌──────────┐ ┌────────────┐      │ │ │Benchmark ││
+  │  │ Profiles │ │ Extraction │      │ │ └──────────┘│
+  │  └──────────┘ └────────────┘      │ │              │
+  │  ┌────────────┐                    │ │              │
+  │  │ Embeddings │                    │ │              │
+  │  └────────────┘                    │ │              │
+  └─────────────────────┬──────────────┘ └───────┬──────┘
+                        │                        │
+  ┌─────────────────────▼────────────────────────▼──────┐
+  │  Backend Interface                                  │
+  │                                                     │
+  │  ┌────────────────┐     ┌──────────────────────────┐│
+  │  │ SQLite (sql.js) │     │ PostgreSQL + pgvector   ││
+  │  └────────────────┘     └──────────────────────────┘│
+  └─────────────────────────────────────────────────────┘
 ```
 
 ## Core Concepts
@@ -224,6 +258,9 @@ The right profile can swing retrieval quality by 40+ points on benchmarks.
 | [`@db0-ai/core`](packages/core) | Types, harness, memory/state/log/context, profiles, extraction |
 | [`@db0-ai/backends-sqlite`](packages/backends/sqlite) | SQLite via sql.js — zero native deps |
 | [`@db0-ai/backends-postgres`](packages/backends/postgres) | PostgreSQL + pgvector |
+| [`@db0-ai/ai-sdk`](packages/integrations/ai-sdk) | Memory middleware for the Vercel AI SDK |
+| [`@db0-ai/langchain`](packages/integrations/langchain) | Memory tools and chat history for LangChain.js |
+| [`@db0-ai/pi`](packages/integrations/pi) | Memory extension for the Pi coding agent |
 | [`@db0-ai/openclaw`](packages/apps/openclaw) | OpenClaw ContextEngine plugin + CLI |
 | [`@db0-ai/claude-code`](packages/apps/claude-code) | Claude Code MCP server + skills + hooks |
 | [`@db0-ai/inspector`](packages/inspector) | Web UI for memory/state/log inspection |
