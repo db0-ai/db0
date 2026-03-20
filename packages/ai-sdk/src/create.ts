@@ -18,15 +18,17 @@
  */
 
 import { db0, defaultEmbeddingFn, PROFILE_CONVERSATIONAL } from "@db0-ai/core";
-import type { Harness, EmbeddingFn, Db0Profile } from "@db0-ai/core";
+import type { Harness, EmbeddingFn, Db0Profile, Db0Backend } from "@db0-ai/core";
 import { createSqliteBackend } from "@db0-ai/backends-sqlite";
 import { db0MemoryMiddleware } from "./middleware.js";
 import type { Db0MiddlewareOptions } from "./middleware.js";
 import { db0MemoryTools } from "./tools.js";
 
 export interface CreateDb0Options {
-  /** Path to SQLite file. Default: "./db0.sqlite" */
+  /** Path to SQLite file. Default: "./db0.sqlite". Ignored if `backend` is provided. */
   dbPath?: string;
+  /** Pre-configured backend (e.g., PostgreSQL for edge deployments). Overrides dbPath. */
+  backend?: Db0Backend;
   /** Agent identifier. Default: "ai-sdk" */
   agentId?: string;
   /** Session identifier. Default: auto-generated */
@@ -70,7 +72,7 @@ export async function createDb0(
     extractOnResponse = true,
   } = options;
 
-  const backend = await createSqliteBackend({ dbPath });
+  const backend = options.backend ?? await createSqliteBackend({ dbPath });
 
   let harness = db0.harness({
     agentId,

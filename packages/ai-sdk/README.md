@@ -96,6 +96,27 @@ const { text } = await generateText({
 });
 ```
 
+## Runtime Compatibility
+
+db0's default SQLite backend requires **Node.js runtime** — it won't work on Vercel Edge Functions or Cloudflare Workers.
+
+For **Next.js**, set the runtime on your API route:
+
+```typescript
+// app/api/chat/route.ts
+export const runtime = "nodejs"; // required for db0 SQLite
+```
+
+For **edge deployments**, use the PostgreSQL backend with a hosted database (Neon, Supabase, Vercel Postgres):
+
+```typescript
+import { createDb0 } from "@db0-ai/ai-sdk";
+import { createPostgresBackend } from "@db0-ai/backends-postgres";
+
+const backend = await createPostgresBackend(process.env.DATABASE_URL!);
+const memory = await createDb0({ backend });
+```
+
 ## Configuration
 
 ```typescript
