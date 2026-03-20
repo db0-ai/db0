@@ -107,11 +107,7 @@ export function db0MemoryMiddleware(
       const userText = getLastUserMessageText(params.prompt);
       if (!userText) return params;
 
-      // Pack relevant memories for this query
-      const ctx = await harness.context().pack(userText, { tokenBudget });
-      if (ctx.count === 0) return params;
-
-      // Also extract facts from the user message now (before LLM call)
+      // Extract facts from the user message (before LLM call)
       if (extractOnResponse) {
         const extraction = harness.extraction();
         const facts = await extraction.extract(userText);
@@ -122,6 +118,10 @@ export function db0MemoryMiddleware(
           });
         }
       }
+
+      // Pack relevant memories for this query
+      const ctx = await harness.context().pack(userText, { tokenBudget });
+      if (ctx.count === 0) return params;
 
       return injectSystemContext(params, ctx.text);
     },

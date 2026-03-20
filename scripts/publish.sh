@@ -37,6 +37,7 @@ PACKAGES=(
   "packages/backends/postgres"
   "packages/apps/openclaw"
   "packages/apps/claude-code"
+  "packages/integrations/ai-sdk"
   "packages/inspector"
   "packages/cli"
   "packages/benchmark"
