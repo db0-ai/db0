@@ -51,7 +51,6 @@ describe("db0 Pi Extension", () => {
     const events = pi.on.mock.calls.map((c: any) => c[0]);
     expect(events).toContain("before_agent_start");
     expect(events).toContain("turn_end");
-    expect(events).toContain("session_before_compact");
     expect(events).toContain("session_start");
     expect(events).toContain("session_shutdown");
 

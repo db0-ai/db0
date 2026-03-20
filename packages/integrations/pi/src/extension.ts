@@ -204,14 +204,6 @@ export async function createDb0PiExtension(
       }
     });
 
-    // Preserve context before compaction discards messages
-    pi.on("session_before_compact", async () => {
-      await harness.log().append({
-        event: "compaction.started",
-        level: "info",
-      });
-    });
-
     // New session — create fresh harness with same backend
     pi.on("session_start", async () => {
       harness = db0.harness({

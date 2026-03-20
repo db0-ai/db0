@@ -2,20 +2,18 @@
 
 ## The Problem
 
-Pi is a powerful coding agent, but it has [the memory of a goldfish](https://github.com/badlogic/pi-mono/issues/1182). Close the session? Forgotten. Switch projects? Forgotten. That API pattern you explained yesterday? Gone.
+Pi is a coding agent with no built-in cross-session memory. Close the session and everything is gone — preferences, project patterns, solutions to bugs you've already fixed. AGENTS.md gives you static instructions, but it doesn't learn from conversations.
 
-Several developers have built [independent](https://github.com/lebonbruce/pi-hippocampus) [memory](https://github.com/jayzeng/pi-memory) extensions to fix this. The core issues:
+This has led developers to build their own memory extensions ([pi-hippocampus](https://github.com/lebonbruce/pi-hippocampus), [pi-memory](https://github.com/jayzeng/pi-memory), and others). The underlying issues:
 
-- **No cross-session memory.** Every new session starts blank. AGENTS.md is static — it doesn't learn or update from conversations. Developers [repeat themselves constantly](https://github.com/badlogic/pi-mono/issues/1182).
-- **Compaction destroys context.** Long sessions exhaust the context window. Pi's compaction summarizes older messages, but it's [explicitly lossy](https://github.com/badlogic/pi-mono/issues/92) — facts get dropped. Tool results (often the most important content) are [truncated to 2000 characters](https://github.com/badlogic/pi-mono/issues/116).
-- **No semantic search over history.** Past sessions are stored as JSONL files, but there's no way to search them by meaning. You can browse with `/tree` and `/resume`, but the agent can't recall relevant knowledge from 50 sessions ago.
+- **No cross-session memory.** Every new session starts blank. AGENTS.md provides static project rules, but nothing that accumulates from conversations.
+- **Compaction is lossy.** Long sessions exhaust the context window. Pi's compaction [summarizes older messages](https://github.com/badlogic/pi-mono/issues/92), but facts get dropped. Tool results — often the most valuable content — are [truncated to 2000 characters](https://github.com/badlogic/pi-mono/issues/116).
+- **No semantic search over history.** Past sessions are stored as JSONL files. You can browse them with `/tree` and `/resume`, but the agent can't search them by meaning.
 - **Memory is an extension concern, not core.** Pi's architecture deliberately keeps memory out of the core agent — it's designed to be solved by extensions.
 
 `@db0-ai/pi` is a Pi extension that gives your coding agent persistent, scoped memory with automatic fact extraction. One install, SQLite storage, no external services.
 
 ## Quick Start
-
-### Install
 
 ```bash
 mkdir -p ~/.pi/agent/extensions/db0
@@ -24,15 +22,15 @@ npm init -y
 npm install @db0-ai/pi
 ```
 
-Create `~/.pi/agent/extensions/db0/index.js`:
+Create `~/.pi/agent/extensions/db0/index.mjs`:
 
 ```javascript
-const { createDb0PiExtension } = require("@db0-ai/pi");
+import { createDb0PiExtension } from "@db0-ai/pi";
 
-module.exports = async function register(pi) {
+export default async function register(pi) {
   const ext = await createDb0PiExtension();
   ext.register(pi);
-};
+}
 ```
 
 Restart Pi. Ask: "what db0 tools do you have?" — it should list 3 tools.
@@ -40,7 +38,7 @@ Restart Pi. Ask: "what db0 tools do you have?" — it should list 3 tools.
 ## What You Get
 
 - **Your coding agent remembers** — preferences, patterns, and project context persist across sessions
-- **Facts survive compaction** — extracted before messages are discarded, not after
+- **Facts are extracted every turn** — not just at compaction, so knowledge accumulates continuously
 - **Semantic search** — the agent finds relevant memories by meaning, not just keywords
 - **Scoped memory** — user preferences vs. project-specific vs. session-temporary, automatically isolated
 - **Zero config** — works with built-in hash embeddings, no API keys, no external services
@@ -63,9 +61,8 @@ The extension hooks into Pi's event system automatically:
 |---|---|
 | `before_agent_start` | Packs relevant memories into context |
 | `turn_end` | Extracts facts from assistant responses |
-| `session_before_compact` | Logs compaction events |
-| `session_start` | Creates fresh harness (memories persist) |
-| `session_shutdown` | Runs reconciliation, closes cleanly |
+| `session_start` | Creates fresh harness (memories persist across sessions) |
+| `session_shutdown` | Runs reconciliation (merge duplicates, clean edges), closes cleanly |
 
 ## Use Cases
 
@@ -110,17 +107,6 @@ you: I'm getting CORS errors
 → db0_memory_search finds the previous fix from project A
 ```
 
-### Surviving long sessions
-
-Pi's compaction discards old messages to free context. db0 extracts facts before they're lost.
-
-```
-[100 messages in, compaction triggers]
-→ db0 has already extracted key facts from every turn
-→ After compaction: conversation is shorter, but knowledge is preserved in db0
-→ Agent can search for any fact from the discarded portion
-```
-
 ### Superseding stale knowledge
 
 Projects evolve. Old facts should be corrected, not duplicated.
@@ -138,17 +124,18 @@ you: We migrated to AWS last week
 ## Configuration
 
 ```javascript
+import { createDb0PiExtension } from "@db0-ai/pi";
+
 const ext = await createDb0PiExtension({
   dbPath: "~/.pi/agent/db0.sqlite",  // default
   tokenBudget: 1500,                  // tokens for context injection
-  // profile: PROFILE_CODING_ASSISTANT  // default — high precision, slow decay
 });
 ```
 
 ### PostgreSQL for Cross-Device Sync
 
 ```javascript
-const { createPostgresBackend } = require("@db0-ai/backends-postgres");
+import { createPostgresBackend } from "@db0-ai/backends-postgres";
 
 const backend = await createPostgresBackend(process.env.DATABASE_URL);
 const ext = await createDb0PiExtension({ backend });
@@ -156,7 +143,7 @@ const ext = await createDb0PiExtension({ backend });
 
 ## How It Compares to pi-hippocampus
 
-[pi-hippocampus](https://github.com/lebonbruce/pi-hippocampus) is the most popular Pi memory extension. db0 takes a different approach:
+[pi-hippocampus](https://github.com/lebonbruce/pi-hippocampus) is another Pi memory extension. db0 takes a different approach:
 
 | | db0 | pi-hippocampus |
 |---|---|---|
@@ -167,7 +154,7 @@ const ext = await createDb0PiExtension({ backend });
 | Production backend | SQLite or PostgreSQL | SQLite only |
 | Ecosystem | Same DB works with AI SDK, LangChain, OpenClaw, inspector | Pi-only |
 
-Both solve the same core problem. db0 is simpler to set up (no Ollama dependency) and connects to the broader db0 ecosystem. pi-hippocampus has more sophisticated memory science (forgetting curves, sleep consolidation).
+db0 is simpler to set up (no Ollama dependency) and connects to the broader db0 ecosystem. pi-hippocampus has more sophisticated memory modeling (forgetting curves, sleep consolidation).
 
 ## Part of db0
 
