@@ -1,0 +1,25 @@
+{
+  "name": "@db0-ai/pi",
+  "version": "0.2.0",
+  "description": "db0 memory extension for the Pi coding agent",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "files": [
+    "dist"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@db0-ai/core": "0.2.0",
+    "@db0-ai/backends-sqlite": "0.2.0"
+  }
+}

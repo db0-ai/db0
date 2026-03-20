@@ -39,6 +39,7 @@ PACKAGES=(
   "packages/apps/claude-code"
   "packages/integrations/ai-sdk"
   "packages/integrations/langchain"
+  "packages/integrations/pi"
   "packages/inspector"
   "packages/cli"
   "packages/benchmark"

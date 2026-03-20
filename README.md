@@ -132,6 +132,8 @@ const agent = createReactAgent({ llm, tools: [...memory.tools] });
 
 Replaces deprecated `BufferMemory` with scoped, persistent memory. See [packages/integrations/langchain](packages/integrations/langchain).
 
+**Pi** — memory extension for the [Pi coding agent](https://github.com/badlogic/pi-mono). See [packages/integrations/pi](packages/integrations/pi).
+
 ## Architecture
 
 ```
@@ -146,9 +148,9 @@ Replaces deprecated `BufferMemory` with scoped, persistent memory. See [packages
   ┌──────────────────────────▼───────────────────────────────┐
   │  Integrations                                            │
   │                                                          │
-  │  ┌──────────────┐  ┌────────────┐                         │
-  │  │   AI SDK     │  │ LangChain  │  (more coming: Pi, ...) │
-  │  └──────────────┘  └────────────┘                         │
+  │  ┌──────────────┐  ┌────────────┐  ┌─────┐                │
+  │  │   AI SDK     │  │ LangChain  │  │ Pi  │                │
+  │  └──────────────┘  └────────────┘  └─────┘                │
   └──────────────────────────┬───────────────────────────────┘
                              │
   ┌──────────────────────────▼───────────────────────────────┐
@@ -257,6 +259,7 @@ The right profile can swing retrieval quality by 40+ points on benchmarks.
 | [`@db0-ai/backends-postgres`](packages/backends/postgres) | PostgreSQL + pgvector |
 | [`@db0-ai/ai-sdk`](packages/integrations/ai-sdk) | Memory middleware for the Vercel AI SDK |
 | [`@db0-ai/langchain`](packages/integrations/langchain) | Memory tools and chat history for LangChain.js |
+| [`@db0-ai/pi`](packages/integrations/pi) | Memory extension for the Pi coding agent |
 | [`@db0-ai/openclaw`](packages/apps/openclaw) | OpenClaw ContextEngine plugin + CLI |
 | [`@db0-ai/claude-code`](packages/apps/claude-code) | Claude Code MCP server + skills + hooks |
 | [`@db0-ai/inspector`](packages/inspector) | Web UI for memory/state/log inspection |

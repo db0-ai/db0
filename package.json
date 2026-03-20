@@ -12,6 +12,7 @@
     "packages/cli",
     "packages/integrations/ai-sdk",
     "packages/integrations/langchain",
+    "packages/integrations/pi",
     "packages/benchmark"
   ],
   "scripts": {
