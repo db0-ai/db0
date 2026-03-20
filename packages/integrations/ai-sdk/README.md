@@ -272,7 +272,7 @@ await generateText({
 
 ## Part of db0
 
-This package is one entry point to the db0 SDK. The same memory database works with the [core SDK](../core), [OpenClaw plugin](../apps/openclaw), [Claude Code MCP server](../apps/claude-code), [CLI](../cli), and [inspector](../inspector).
+This package is one entry point to the db0 SDK. The same memory database works with the [core SDK](../../core), [OpenClaw plugin](../../apps/openclaw), [Claude Code MCP server](../../apps/claude-code), [CLI](../../cli), and [inspector](../../inspector).
 
 ## License
 

@@ -21,3 +21,10 @@ PostgreSQL tests require `DB0_POSTGRES_URL` env var. Without it, postgres tests 
 ```bash
 DB0_POSTGRES_URL="postgresql://localhost/db0_test" npx vitest run
 ```
+
+## GitHub Accounts
+
+- **db0-ai/db0** repo uses the `lightcone0` GitHub account
+  - Git identity: `Lightcone <lightconemail@gmail.com>` (local config, not global)
+  - Switch before pushing: `gh auth switch --user lightcone0`
+- **shenli/db0** is the private backup repo under the `shenli` account

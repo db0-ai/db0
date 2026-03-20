@@ -10,7 +10,7 @@
     "packages/apps/claude-code",
     "packages/inspector",
     "packages/cli",
-    "packages/ai-sdk",
+    "packages/integrations/ai-sdk",
     "packages/benchmark"
   ],
   "scripts": {
