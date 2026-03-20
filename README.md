@@ -95,6 +95,8 @@ const child = harness.spawn({ agentId: "researcher", sessionId: "s2" });
 // user-scoped facts flow both ways; session-scoped facts stay isolated
 ```
 
+See [examples/chat-agent](examples/chat-agent) for a complete working example.
+
 ### Framework Integrations
 
 **OpenClaw** — zero-config ContextEngine plugin:
