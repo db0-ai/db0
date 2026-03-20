@@ -38,6 +38,7 @@ PACKAGES=(
   "packages/apps/openclaw"
   "packages/apps/claude-code"
   "packages/integrations/ai-sdk"
+  "packages/integrations/langchain"
   "packages/inspector"
   "packages/cli"
   "packages/benchmark"

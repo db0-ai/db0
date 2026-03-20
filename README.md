@@ -121,6 +121,17 @@ const model = wrapLanguageModel({ model: yourModel, middleware: memory.middlewar
 
 Works with any provider (Anthropic, OpenAI, Google). See [packages/integrations/ai-sdk](packages/integrations/ai-sdk).
 
+**LangChain.js** — memory tools and chat history for LangChain agents:
+
+```typescript
+import { createDb0 } from "@db0-ai/langchain";
+
+const memory = await createDb0();
+const agent = createReactAgent({ llm, tools: [...memory.tools] });
+```
+
+Replaces deprecated `BufferMemory` with scoped, persistent memory. See [packages/integrations/langchain](packages/integrations/langchain).
+
 ## Architecture
 
 ```
@@ -135,9 +146,9 @@ Works with any provider (Anthropic, OpenAI, Google). See [packages/integrations/
   ┌──────────────────────────▼───────────────────────────────┐
   │  Integrations                                            │
   │                                                          │
-  │  ┌──────────────┐                                        │
-  │  │   AI SDK     │   (more coming: Pi, LangChain, ...)   │
-  │  └──────────────┘                                        │
+  │  ┌──────────────┐  ┌────────────┐                         │
+  │  │   AI SDK     │  │ LangChain  │  (more coming: Pi, ...) │
+  │  └──────────────┘  └────────────┘                         │
   └──────────────────────────┬───────────────────────────────┘
                              │
   ┌──────────────────────────▼───────────────────────────────┐
@@ -245,6 +256,7 @@ The right profile can swing retrieval quality by 40+ points on benchmarks.
 | [`@db0-ai/backends-sqlite`](packages/backends/sqlite) | SQLite via sql.js — zero native deps |
 | [`@db0-ai/backends-postgres`](packages/backends/postgres) | PostgreSQL + pgvector |
 | [`@db0-ai/ai-sdk`](packages/integrations/ai-sdk) | Memory middleware for the Vercel AI SDK |
+| [`@db0-ai/langchain`](packages/integrations/langchain) | Memory tools and chat history for LangChain.js |
 | [`@db0-ai/openclaw`](packages/apps/openclaw) | OpenClaw ContextEngine plugin + CLI |
 | [`@db0-ai/claude-code`](packages/apps/claude-code) | Claude Code MCP server + skills + hooks |
 | [`@db0-ai/inspector`](packages/inspector) | Web UI for memory/state/log inspection |
