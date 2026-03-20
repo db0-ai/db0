@@ -9,7 +9,7 @@ Several developers have built [independent](https://github.com/lebonbruce/pi-hip
 - **No cross-session memory.** Every new session starts blank. AGENTS.md is static — it doesn't learn or update from conversations. Developers [repeat themselves constantly](https://github.com/badlogic/pi-mono/issues/1182).
 - **Compaction destroys context.** Long sessions exhaust the context window. Pi's compaction summarizes older messages, but it's [explicitly lossy](https://github.com/badlogic/pi-mono/issues/92) — facts get dropped. Tool results (often the most important content) are [truncated to 2000 characters](https://github.com/badlogic/pi-mono/issues/116).
 - **No semantic search over history.** Past sessions are stored as JSONL files, but there's no way to search them by meaning. You can browse with `/tree` and `/resume`, but the agent can't recall relevant knowledge from 50 sessions ago.
-- **The maintainer wants memory as an extension, not core.** A [proposal to add memory to Pi core](https://github.com/badlogic/pi-mono/issues/1255) was rejected. Memory is explicitly an extension concern — which is where db0 fits.
+- **Memory is an extension concern, not core.** Pi's architecture deliberately keeps memory out of the core agent — it's designed to be solved by extensions.
 
 `@db0-ai/pi` is a Pi extension that gives your coding agent persistent, scoped memory with automatic fact extraction. One install, SQLite storage, no external services.
 
