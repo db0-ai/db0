@@ -154,6 +154,101 @@ wrapLanguageModel({ model: openai("gpt-4o"), middleware: memory.middleware });
 wrapLanguageModel({ model: google("gemini-2.5-flash"), middleware: memory.middleware });
 ```
 
+## Use Cases
+
+### Customer support bot that knows your history
+
+Users hate repeating themselves. With db0, the bot remembers past issues, preferences, and account context across every conversation.
+
+```typescript
+const memory = await createDb0({ userId: session.userId, agentId: "support-bot" });
+const model = wrapLanguageModel({ model: yourModel, middleware: memory.middleware });
+
+// First conversation
+await generateText({ model, prompt: "I'm having trouble with billing. I'm on the Pro plan." });
+
+// Weeks later — bot remembers the user is on Pro plan
+await generateText({ model, prompt: "I need to upgrade my account" });
+// → Knows user is already on Pro, offers relevant upgrade paths
+```
+
+### AI tutor that tracks progress
+
+An AI tutor that remembers what the student has learned, where they struggle, and adapts its teaching style over time.
+
+```typescript
+const memory = await createDb0({ userId: studentId, agentId: "tutor" });
+const model = wrapLanguageModel({ model: yourModel, middleware: memory.middleware });
+
+// Session 1: student struggles with recursion
+await generateText({ model, prompt: "I don't understand how recursion works" });
+
+// Session 5: tutor recalls earlier struggles
+await generateText({ model, prompt: "Can you explain tree traversal?" });
+// → "Since you've been working on recursion, tree traversal is a natural next step..."
+```
+
+### Multi-tenant SaaS with per-user memory
+
+Each user gets their own memory scope. One SQLite file per user, or shared Postgres with `userId` isolation.
+
+```typescript
+// In your Next.js API route
+export async function POST(req: Request) {
+  const { userId } = await auth();
+  const { messages } = await req.json();
+
+  const memory = await createDb0({
+    dbPath: `./data/${userId}.sqlite`,
+    userId,
+  });
+
+  const model = wrapLanguageModel({ model: yourModel, middleware: memory.middleware });
+
+  const result = streamText({ model, messages });
+  memory.close();
+  return result.toDataStreamResponse();
+}
+```
+
+### Research agent with tool-controlled memory
+
+An agent that decides what's worth remembering. Uses tools to save key findings and search past research.
+
+```typescript
+const memory = await createDb0({ agentId: "researcher" });
+const model = wrapLanguageModel({ model: yourModel, middleware: memory.middleware });
+
+const { text } = await generateText({
+  model,
+  tools: {
+    ...memory.tools,           // db0_memory_write, db0_memory_search, db0_memory_list
+    webSearch: mySearchTool,   // your other tools
+  },
+  maxSteps: 10,
+  prompt: "Research the latest developments in WebAssembly and save the key findings",
+});
+// Agent searches, reads, and explicitly saves important facts to memory
+```
+
+### Onboarding flow that picks up where you left off
+
+User closes the tab halfway through onboarding. When they come back, the agent knows exactly where they stopped.
+
+```typescript
+const memory = await createDb0({ userId, agentId: "onboarding" });
+const model = wrapLanguageModel({ model: yourModel, middleware: memory.middleware });
+
+// User completed steps 1-3 yesterday, closed the tab
+// Today — agent recalls progress automatically
+await generateText({
+  model,
+  prompt: "I want to continue setting up my account",
+});
+// → "Welcome back! You've already connected your GitHub repo and set up CI.
+//    Next up is configuring your deployment settings."
+```
+
 ## Part of db0
 
 This package is one entry point to the db0 SDK. The same memory database works with the [core SDK](../core), [OpenClaw plugin](../apps/openclaw), [Claude Code MCP server](../apps/claude-code), [CLI](../cli), and [inspector](../inspector).
