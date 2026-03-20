@@ -4,7 +4,7 @@
 
 Pi is a powerful coding agent, but it has [the memory of a goldfish](https://github.com/badlogic/pi-mono/issues/1182). Close the session? Forgotten. Switch projects? Forgotten. That API pattern you explained yesterday? Gone.
 
-This isn't a minor annoyance — it's the [#1 pain point](https://github.com/lebonbruce/pi-hippocampus) in the Pi community, and has spawned at least three independent memory extensions. The core issues:
+Several developers have built [independent](https://github.com/lebonbruce/pi-hippocampus) [memory](https://github.com/jayzeng/pi-memory) extensions to fix this. The core issues:
 
 - **No cross-session memory.** Every new session starts blank. AGENTS.md is static — it doesn't learn or update from conversations. Developers [repeat themselves constantly](https://github.com/badlogic/pi-mono/issues/1182).
 - **Compaction destroys context.** Long sessions exhaust the context window. Pi's compaction summarizes older messages, but it's [explicitly lossy](https://github.com/badlogic/pi-mono/issues/92) — facts get dropped. Tool results (often the most important content) are [truncated to 2000 characters](https://github.com/badlogic/pi-mono/issues/116).
