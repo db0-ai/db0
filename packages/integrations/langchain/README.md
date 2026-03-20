@@ -1,10 +1,16 @@
 # @db0-ai/langchain
 
-LangChain.js [deprecated its memory classes](https://docs.langchain.com/oss/javascript/migrate/langchain-v1) in v0.3.1. The replacement — LangGraph checkpointers and Store — requires [4-6 packages](https://github.com/langchain-ai/langgraphjs/issues/545), has [namespace bugs that block production deployment](https://github.com/langchain-ai/langgraphjs/issues/1611), and offers no automatic memory extraction in JavaScript (LangMem is Python-only).
+## The Problem
 
-Meanwhile, developers report that [messages vanish after server restart](https://github.com/langchain-ai/langchainjs/issues/10144) with the recommended `createAgent` + checkpointer pattern, and the line between self-hosted and platform-dependent features [remains unclear](https://forum.langchain.com/t/persistence-long-term-memory/404).
+LangChain.js [deprecated all memory classes](https://docs.langchain.com/oss/javascript/migrate/langchain-v1) (`BufferMemory`, `ConversationSummaryMemory`, etc.) in v0.3.1. The recommended replacement — LangGraph checkpointers and Store — has real issues:
 
-`@db0-ai/langchain` gives your LangChain.js agents persistent memory that works locally — scoped, versioned, with automatic fact extraction. One package, SQLite or Postgres, no platform dependency.
+- **4-6 packages to assemble.** Checkpointers, stores, and embedding providers are all separate packages with [poorly documented interfaces](https://github.com/langchain-ai/langgraphjs/issues/545). Getting them to work together is non-trivial.
+- **Messages vanish silently.** The recommended `createAgent` + checkpointer pattern has a [bug where messages disappear after server restart](https://github.com/langchain-ai/langchainjs/issues/10144) with no error. Thread metadata persists but conversations are empty.
+- **Store bugs block production.** `store.get()` works locally but [throws errors on LangGraph Platform](https://github.com/langchain-ai/langgraphjs/issues/1611). `PostgresStore` has an [encoding bug](https://github.com/langchain-ai/langgraph/issues/2924) where data is stored but unretrievable.
+- **No memory extraction in JavaScript.** LangMem (automatic fact extraction) is Python-only. JS developers must manually decide what to store and when.
+- **Self-hosted vs. platform is unclear.** Developers [can't tell what requires LangGraph Platform](https://forum.langchain.com/t/persistence-long-term-memory/404) (the paid service) vs. what they can run themselves.
+
+`@db0-ai/langchain` replaces all of that with one package. Persistent memory that works locally — scoped, versioned, with automatic fact extraction. SQLite or Postgres, no platform dependency.
 
 ## Quick Start
 
@@ -72,6 +78,102 @@ await history.addAIMessage("Got it! I'll remember your TypeScript preference.");
 
 // Facts extracted automatically — searchable across sessions
 const messages = await history.getMessages();
+```
+
+## Use Cases
+
+### ReAct agent that learns from past tasks
+
+An agent that remembers solutions to problems it's solved before — across sessions, without you managing any storage.
+
+```typescript
+const memory = await createDb0({ agentId: "code-reviewer" });
+
+const agent = createReactAgent({
+  llm: yourModel,
+  tools: [...memory.tools, fileReadTool, shellTool],
+});
+
+// Session 1: agent fixes a CORS issue
+await agent.invoke({
+  messages: [{ role: "user", content: "Fix the CORS error in our API" }],
+});
+// Agent calls db0_memory_write to save the solution
+
+// Session 2: similar issue in a different project
+memory.newSession();
+await agent.invoke({
+  messages: [{ role: "user", content: "I'm getting CORS errors again" }],
+});
+// Agent calls db0_memory_search, finds the previous fix
+```
+
+### Multi-user chatbot with per-user memory
+
+Each user gets isolated memory. One SQLite file, scoped by `userId`.
+
+```typescript
+async function handleMessage(userId: string, message: string) {
+  const memory = await createDb0({ userId, agentId: "support-bot" });
+
+  const agent = createReactAgent({
+    llm: yourModel,
+    tools: [...memory.tools],
+  });
+
+  const result = await agent.invoke({
+    messages: [{ role: "user", content: message }],
+  });
+
+  memory.close();
+  return result;
+}
+```
+
+### Migrating from deprecated BufferMemory
+
+Before (deprecated):
+
+```typescript
+import { BufferMemory } from "langchain/memory";  // ⚠️ deprecated in v0.3.1
+import { ConversationChain } from "langchain/chains";
+
+const memory = new BufferMemory();
+const chain = new ConversationChain({ llm, memory });
+```
+
+After:
+
+```typescript
+import { createDb0 } from "@db0-ai/langchain";
+
+const memory = await createDb0();
+// Use memory.chatHistory for message storage with automatic extraction
+// Use memory.tools for agent-controlled memory
+// Facts persist to SQLite — no more in-memory-only conversations
+```
+
+### RAG pipeline with persistent knowledge
+
+Ingest documents into db0's scoped memory, then search them with hybrid scoring.
+
+```typescript
+const memory = await createDb0({ agentId: "knowledge-base" });
+const { harness } = memory;
+
+// Ingest documents
+for (const doc of documents) {
+  await harness.context().ingest(doc.content, {
+    scope: "agent",
+    tags: ["knowledge", doc.category],
+  });
+}
+
+// Search with hybrid scoring (similarity + recency + popularity)
+const ctx = await harness.context().pack("How does authentication work?", {
+  tokenBudget: 3000,
+});
+// ctx.text → relevant knowledge, ready for the system prompt
 ```
 
 ## Configuration
