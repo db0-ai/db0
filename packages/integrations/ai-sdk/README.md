@@ -1,6 +1,10 @@
 # @db0-ai/ai-sdk
 
-Persistent memory for the [Vercel AI SDK](https://ai-sdk.dev). Wrap any language model with db0 to give it memory that persists across sessions — no infrastructure, no LLM calls for extraction.
+The [AI SDK](https://ai-sdk.dev) makes it easy to call LLMs. But every call is stateless — your app forgets everything the moment the response ends. Users repeat their preferences, agents lose context between sessions, and you end up building custom memory plumbing for every project.
+
+`@db0-ai/ai-sdk` adds persistent memory to any AI SDK model as a middleware. Facts are extracted automatically from conversations, stored in a local SQLite database (or Postgres for production), and injected back into the prompt when relevant — all without extra LLM calls.
+
+One line to add, nothing to maintain.
 
 ## Quick Start
 
