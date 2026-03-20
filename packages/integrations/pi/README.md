@@ -16,13 +16,24 @@ This has led developers to build their own memory extensions ([pi-hippocampus](h
 ## Quick Start
 
 ```bash
-mkdir -p ~/.pi/agent/extensions/db0
-cd ~/.pi/agent/extensions/db0
-npm init -y
-npm install @db0-ai/pi
+npx @db0-ai/pi init
 ```
 
-Create `~/.pi/agent/extensions/db0/index.mjs`:
+One command. Creates the extension in `~/.pi/agent/extensions/db0/`, installs dependencies, and sets up the entry point. Restart Pi to activate.
+
+Ask Pi: "what db0 tools do you have?" — it should list 3 tools.
+
+### Manual Install
+
+If you prefer to set it up yourself:
+
+```bash
+mkdir -p ~/.pi/agent/extensions/db0
+cd ~/.pi/agent/extensions/db0
+npm init -y && npm install @db0-ai/pi
+```
+
+Create `index.mjs`:
 
 ```javascript
 import { createDb0PiExtension } from "@db0-ai/pi";
@@ -33,7 +44,12 @@ export default async function register(pi) {
 }
 ```
 
-Restart Pi. Ask: "what db0 tools do you have?" — it should list 3 tools.
+### Uninstall
+
+```bash
+npx @db0-ai/pi uninstall              # remove extension and database
+npx @db0-ai/pi uninstall --keep-data   # remove extension, keep memories
+```
 
 ## What You Get
 
@@ -120,6 +136,16 @@ Session 5:
 you: We migrated to AWS last week
 → Agent supersedes the Heroku fact — old one preserved for audit, excluded from search
 ```
+
+## Inspector
+
+Browse, search, and manage your agent's memories in a web UI:
+
+```bash
+npx @db0-ai/inspector --db ~/.pi/agent/db0.sqlite
+```
+
+Opens at `http://127.0.0.1:6460` with three views: memories, dashboard, and health report. See [@db0-ai/inspector](../../inspector) for full options.
 
 ## Configuration
 

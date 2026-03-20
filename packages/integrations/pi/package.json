@@ -11,6 +11,9 @@
       "import": "./dist/index.js"
     }
   },
+  "bin": {
+    "db0-pi": "./dist/cli.js"
+  },
   "scripts": {
     "build": "tsc"
   },
