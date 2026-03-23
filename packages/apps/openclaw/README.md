@@ -18,7 +18,7 @@ npx @db0-ai/openclaw init
 
 Both set up persistent SQLite storage, configure `openclaw.json`, and activate db0 as the context engine. Restart OpenClaw to activate.
 
-**Requires OpenClaw v2026.3.7 or later.**
+**Requires OpenClaw v2026.3.7 or later.** Compatible with v2026.3.22 (latest).
 
 Or tell your OpenClaw agent:
 

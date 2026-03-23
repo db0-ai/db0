@@ -140,6 +140,8 @@ export interface ContextEngine {
     sessionKey?: string;
     messages: AgentMessage[];
     tokenBudget?: number;
+    /** Model ID for the current run (added in OpenClaw v2026.3.22). Optional for backward compat. */
+    modelId?: string;
   }): Promise<AssembleResult>;
 
   compact(params: {
@@ -617,6 +619,7 @@ export class Db0ContextEngine implements ContextEngine {
     sessionKey?: string;
     messages: AgentMessage[];
     tokenBudget?: number;
+    modelId?: string;
   }): Promise<AssembleResult> {
     try {
       if (!this.harness) {
