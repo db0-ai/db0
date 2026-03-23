@@ -1,6 +1,6 @@
 {
   "name": "@db0-ai/ai-sdk",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "db0 integration for the Vercel AI SDK — persistent memory middleware and tools",
   "type": "module",
   "main": "./dist/index.js",
@@ -15,12 +15,13 @@
     "build": "tsc"
   },
   "files": [
+    "README.md",
     "dist"
   ],
   "license": "MIT",
   "dependencies": {
-    "@db0-ai/core": "0.2.1",
-    "@db0-ai/backends-sqlite": "0.2.1"
+    "@db0-ai/core": "0.2.2",
+    "@db0-ai/backends-sqlite": "0.2.2"
   },
   "peerDependencies": {
     "ai": ">=4.0.0",

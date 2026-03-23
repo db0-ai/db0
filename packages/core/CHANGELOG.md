@@ -1,5 +1,11 @@
 # @db0-ai/core
 
+## 0.2.2
+
+### Patch Changes
+
+- Include README.md in npm packages. Add READMEs for core, backends-sqlite, backends-postgres, and cli.
+
 ## 0.2.1
 
 ### Patch Changes

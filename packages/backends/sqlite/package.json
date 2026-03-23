@@ -1,6 +1,6 @@
 {
   "name": "@db0-ai/backends-sqlite",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -14,6 +14,7 @@
     "build": "tsc"
   },
   "files": [
+    "README.md",
     "dist"
   ],
   "license": "MIT",
@@ -22,6 +23,6 @@
     "sql.js": "^1.11.0"
   },
   "peerDependencies": {
-    "@db0-ai/core": "0.2.1"
+    "@db0-ai/core": "0.2.2"
   }
 }

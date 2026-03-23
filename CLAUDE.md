@@ -29,14 +29,36 @@ DB0_POSTGRES_URL="postgresql://localhost/db0_test" npx vitest run
   - Switch before pushing: `gh auth switch --user lightcone0`
 - **shenli/db0** is the private backup repo under the `shenli` account
 
-## npm Publishing
+## Versioning & Publishing
+
+### Version bumps (use Changesets, not manual edits)
+
+All packages are in a fixed version group — they share the same version number.
+
+```bash
+# 1. Create a changeset (or write .changeset/<name>.md manually)
+npx changeset
+
+# 2. Consume changesets — bumps versions, updates internal deps, generates changelogs
+npx changeset version
+
+# 3. Build, test, commit, tag
+npm run build
+npx vitest run
+git add -A && git commit -m "release: v<version>"
+git tag v<version> && git push && git push --tags
+```
+
+New packages must be added to `.changeset/config.json` `fixed` group.
+
+### npm publish
 
 - npm account: `lightcone`
-- All packages are under the `@db0-ai/*` scope with public access
-- Versions are kept in lockstep (all packages share the same version)
-- Publish via `./scripts/publish.sh` (uses changesets) or directly:
+- All packages under `@db0-ai/*` scope with public access
+- OTP required (2FA enabled)
+- Full release: `./scripts/publish.sh` (runs preflight, changeset version, build, publish)
+- Individual package: `npm publish --workspace=packages/<path> --access public --otp=<code>`
+- Batch publish all:
   ```bash
-  npm publish --workspace=packages/<path> --access public --otp=<code>
+  npx changeset publish --otp=<code>
   ```
-- OTP required (2FA enabled on npm account)
-- Build before publishing: `npm run build`

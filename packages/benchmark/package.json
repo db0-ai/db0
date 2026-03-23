@@ -1,6 +1,6 @@
 {
   "name": "@db0-ai/benchmark",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Memory quality benchmarks for db0",
   "type": "module",
   "main": "dist/index.js",
@@ -15,15 +15,15 @@
     "bench:longmemeval-fetch": "bash scripts/fetch-longmemeval.sh"
   },
   "dependencies": {
-    "@db0-ai/core": "0.2.1",
-    "@db0-ai/backends-sqlite": "0.2.1"
+    "@db0-ai/core": "0.2.2",
+    "@db0-ai/backends-sqlite": "0.2.2"
   },
   "devDependencies": {
     "tsx": "^4.0.0",
     "typescript": "^5.7.0"
   },
   "peerDependencies": {
-    "@db0-ai/backends-postgres": "0.2.1"
+    "@db0-ai/backends-postgres": "0.2.2"
   },
   "peerDependenciesMeta": {
     "@db0-ai/backends-postgres": {
