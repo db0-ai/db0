@@ -1,6 +1,6 @@
 {
   "name": "@db0-ai/openclaw",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -19,7 +19,9 @@
     "build": "tsc"
   },
   "openclaw": {
-    "extensions": ["./dist/plugin.js"]
+    "extensions": [
+      "./dist/plugin.js"
+    ]
   },
   "files": [
     "dist",
@@ -27,8 +29,8 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@db0-ai/backends-sqlite": "0.2.0",
-    "@db0-ai/core": "0.2.0",
+    "@db0-ai/backends-sqlite": "0.2.1",
+    "@db0-ai/core": "0.2.1",
     "debug": "^4.4.3"
   }
 }

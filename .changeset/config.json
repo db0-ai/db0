@@ -11,6 +11,9 @@
       "@db0-ai/claude-code",
       "@db0-ai/inspector",
       "@db0-ai/cli",
+      "@db0-ai/ai-sdk",
+      "@db0-ai/langchain",
+      "@db0-ai/pi",
       "@db0-ai/benchmark"
     ]
   ],

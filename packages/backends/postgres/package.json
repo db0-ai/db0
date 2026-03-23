@@ -1,6 +1,6 @@
 {
   "name": "@db0-ai/backends-postgres",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -25,6 +25,6 @@
     "@types/pg": "^8.11.0"
   },
   "peerDependencies": {
-    "@db0-ai/core": "0.2.0"
+    "@db0-ai/core": "0.2.1"
   }
 }

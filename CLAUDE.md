@@ -28,3 +28,15 @@ DB0_POSTGRES_URL="postgresql://localhost/db0_test" npx vitest run
   - Git identity: `Lightcone <lightconemail@gmail.com>` (local config, not global)
   - Switch before pushing: `gh auth switch --user lightcone0`
 - **shenli/db0** is the private backup repo under the `shenli` account
+
+## npm Publishing
+
+- npm account: `lightcone`
+- All packages are under the `@db0-ai/*` scope with public access
+- Versions are kept in lockstep (all packages share the same version)
+- Publish via `./scripts/publish.sh` (uses changesets) or directly:
+  ```bash
+  npm publish --workspace=packages/<path> --access public --otp=<code>
+  ```
+- OTP required (2FA enabled on npm account)
+- Build before publishing: `npm run build`

@@ -1,6 +1,6 @@
 {
   "name": "@db0-ai/cli",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -15,10 +15,10 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@db0-ai/core": "0.2.0",
-    "@db0-ai/backends-sqlite": "0.2.0"
+    "@db0-ai/core": "0.2.1",
+    "@db0-ai/backends-sqlite": "0.2.1"
   },
   "optionalDependencies": {
-    "@db0-ai/backends-postgres": "^0.1.0"
+    "@db0-ai/backends-postgres": "^0.2.1"
   }
 }
