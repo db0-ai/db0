@@ -1,7 +1,8 @@
 {
   "name": "@db0-ai/ai-sdk",
   "version": "0.2.2",
-  "description": "db0 integration for the Vercel AI SDK — persistent memory middleware and tools",
+  "description": "Persistent memory middleware for Vercel AI SDK. Add long-term memory to useChat apps — retrieves relevant facts from past sessions within a token budget. Works with any AI SDK provider.",
+  "keywords": ["ai-sdk", "vercel", "useChat", "memory", "persistent-memory", "chat-history", "context-window", "llm", "nextjs"],
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

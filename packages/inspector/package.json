@@ -1,6 +1,7 @@
 {
   "name": "@db0-ai/inspector",
   "version": "0.2.2",
+  "description": "Visual memory inspector for db0. Browse, search, and manage AI agent memories in a web UI with dashboard and health reports.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

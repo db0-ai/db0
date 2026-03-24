@@ -1,7 +1,8 @@
 {
   "name": "@db0-ai/langchain",
   "version": "0.2.2",
-  "description": "db0 memory integration for LangChain.js — persistent memory tools and chat history",
+  "description": "Persistent memory for LangChain.js agents. Replaces deprecated ConversationBufferMemory and RunnableWithMessageHistory. Framework-agnostic storage that survives LangChain upgrades.",
+  "keywords": ["langchain", "langchainjs", "memory", "BufferMemory", "deprecated", "persistent-memory", "agent", "llm", "chat-history"],
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

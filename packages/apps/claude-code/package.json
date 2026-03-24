@@ -1,6 +1,7 @@
 {
   "name": "@db0-ai/claude-code",
   "version": "0.2.2",
+  "description": "db0 memory MCP server for Claude Code. Persistent scoped memory across sessions with semantic search.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

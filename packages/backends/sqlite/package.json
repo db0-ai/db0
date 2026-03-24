@@ -1,6 +1,7 @@
 {
   "name": "@db0-ai/backends-sqlite",
   "version": "0.2.2",
+  "description": "SQLite backend for db0. Pure JavaScript via sql.js, zero native dependencies. Local-first persistent memory for AI agents.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

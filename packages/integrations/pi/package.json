@@ -1,7 +1,7 @@
 {
   "name": "@db0-ai/pi",
   "version": "0.2.2",
-  "description": "db0 memory extension for the Pi coding agent",
+  "description": "db0 memory extension for the Pi coding agent. Persistent cross-session memory with automatic fact extraction. Zero config, SQLite storage.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

@@ -1,6 +1,7 @@
 {
   "name": "@db0-ai/cli",
   "version": "0.2.2",
+  "description": "CLI for db0. List, search, export, and import AI agent memories from the command line.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

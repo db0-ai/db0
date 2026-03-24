@@ -1,6 +1,7 @@
 {
   "name": "@db0-ai/openclaw",
   "version": "0.2.2",
+  "description": "db0 memory plugin for OpenClaw. Persistent scoped memory, automatic fact extraction, sub-agent support, compaction safety.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
