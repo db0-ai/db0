@@ -1,5 +1,15 @@
 # @db0-ai/benchmark
 
+## 0.2.3
+
+### Patch Changes
+
+- Update npm package descriptions and keywords for search discoverability.
+- Updated dependencies
+  - @db0-ai/core@0.2.3
+  - @db0-ai/backends-sqlite@0.2.3
+  - @db0-ai/backends-postgres@0.2.3
+
 ## 0.2.2
 
 ### Patch Changes

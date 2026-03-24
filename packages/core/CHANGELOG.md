@@ -1,5 +1,11 @@
 # @db0-ai/core
 
+## 0.2.3
+
+### Patch Changes
+
+- Update npm package descriptions and keywords for search discoverability.
+
 ## 0.2.2
 
 ### Patch Changes

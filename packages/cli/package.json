@@ -1,6 +1,6 @@
 {
   "name": "@db0-ai/cli",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "CLI for db0. List, search, export, and import AI agent memories from the command line.",
   "type": "module",
   "main": "./dist/index.js",
@@ -17,10 +17,10 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@db0-ai/core": "0.2.2",
-    "@db0-ai/backends-sqlite": "0.2.2"
+    "@db0-ai/core": "0.2.3",
+    "@db0-ai/backends-sqlite": "0.2.3"
   },
   "optionalDependencies": {
-    "@db0-ai/backends-postgres": "^0.2.2"
+    "@db0-ai/backends-postgres": "^0.2.3"
   }
 }

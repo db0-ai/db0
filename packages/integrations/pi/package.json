@@ -1,6 +1,6 @@
 {
   "name": "@db0-ai/pi",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "db0 memory extension for the Pi coding agent. Persistent cross-session memory with automatic fact extraction. Zero config, SQLite storage.",
   "type": "module",
   "main": "./dist/index.js",
@@ -23,7 +23,7 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@db0-ai/core": "0.2.2",
-    "@db0-ai/backends-sqlite": "0.2.2"
+    "@db0-ai/core": "0.2.3",
+    "@db0-ai/backends-sqlite": "0.2.3"
   }
 }

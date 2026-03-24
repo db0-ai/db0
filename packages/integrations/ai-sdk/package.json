@@ -1,8 +1,18 @@
 {
   "name": "@db0-ai/ai-sdk",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Persistent memory middleware for Vercel AI SDK. Add long-term memory to useChat apps — retrieves relevant facts from past sessions within a token budget. Works with any AI SDK provider.",
-  "keywords": ["ai-sdk", "vercel", "useChat", "memory", "persistent-memory", "chat-history", "context-window", "llm", "nextjs"],
+  "keywords": [
+    "ai-sdk",
+    "vercel",
+    "useChat",
+    "memory",
+    "persistent-memory",
+    "chat-history",
+    "context-window",
+    "llm",
+    "nextjs"
+  ],
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -21,8 +31,8 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@db0-ai/core": "0.2.2",
-    "@db0-ai/backends-sqlite": "0.2.2"
+    "@db0-ai/core": "0.2.3",
+    "@db0-ai/backends-sqlite": "0.2.3"
   },
   "peerDependencies": {
     "ai": ">=4.0.0",

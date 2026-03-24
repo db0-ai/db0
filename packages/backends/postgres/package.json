@@ -1,6 +1,6 @@
 {
   "name": "@db0-ai/backends-postgres",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "PostgreSQL + pgvector backend for db0. Native hybrid vector search, cross-device memory sync for AI agents.",
   "type": "module",
   "main": "./dist/index.js",
@@ -27,6 +27,6 @@
     "@types/pg": "^8.11.0"
   },
   "peerDependencies": {
-    "@db0-ai/core": "0.2.2"
+    "@db0-ai/core": "0.2.3"
   }
 }

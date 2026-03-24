@@ -1,8 +1,18 @@
 {
   "name": "@db0-ai/langchain",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Persistent memory for LangChain.js agents. Replaces deprecated ConversationBufferMemory and RunnableWithMessageHistory. Framework-agnostic storage that survives LangChain upgrades.",
-  "keywords": ["langchain", "langchainjs", "memory", "BufferMemory", "deprecated", "persistent-memory", "agent", "llm", "chat-history"],
+  "keywords": [
+    "langchain",
+    "langchainjs",
+    "memory",
+    "BufferMemory",
+    "deprecated",
+    "persistent-memory",
+    "agent",
+    "llm",
+    "chat-history"
+  ],
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -21,8 +31,8 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@db0-ai/core": "0.2.2",
-    "@db0-ai/backends-sqlite": "0.2.2"
+    "@db0-ai/core": "0.2.3",
+    "@db0-ai/backends-sqlite": "0.2.3"
   },
   "peerDependencies": {
     "@langchain/core": ">=0.3.0",
