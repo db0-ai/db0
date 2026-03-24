@@ -7,7 +7,7 @@
     "start": "next start"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^1.0.0",
+    "@ai-sdk/openai": "^1.0.0",
     "@db0-ai/core": "^0.2.2",
     "@db0-ai/backends-sqlite": "^0.2.2",
     "ai": "^6.0.0",

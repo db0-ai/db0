@@ -20,7 +20,7 @@ npm install
 Create `.env.local`:
 
 ```
-ANTHROPIC_API_KEY=sk-ant-...
+OPENAI_API_KEY=sk-...
 ```
 
 ```bash

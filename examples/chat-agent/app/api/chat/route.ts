@@ -1,4 +1,4 @@
-import { anthropic } from "@ai-sdk/anthropic";
+import { openai } from "@ai-sdk/openai";
 import { streamText } from "ai";
 import { getHarness } from "@/lib/db0";
 
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     : "You are a helpful assistant with memory of past conversations.";
 
   const result = streamText({
-    model: anthropic("claude-sonnet-4-20250514"),
+    model: openai("gpt-5.4-mini"),
     system: systemPrompt,
     messages,
     async onFinish({ text }) {
