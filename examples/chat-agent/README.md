@@ -1,48 +1,101 @@
-# Chat Agent Example
+# db0 Chat Agent
 
-A terminal chatbot that remembers across sessions, built with db0.
+A Next.js chatbot with persistent memory powered by db0. Demonstrates what the AI SDK doesn't provide out of the box: **a memory system that works across conversations.**
 
-## What it demonstrates
+## What it shows
 
-- **Persistent memory** — facts survive across sessions via SQLite
-- **Automatic extraction** — rules-based fact detection from conversation (zero LLM calls)
-- **Context packing** — relevant memories assembled into the system prompt with token budgets
-- **Scoped memory** — user preferences stored with `user` scope, visible in every future session
-- **Session management** — start fresh conversations while keeping memory intact
+1. **Agent memory** — tell the agent your preferences in one chat. Start a new chat — it still knows. This is `context().pack()` retrieving relevant facts from past sessions and injecting them into the system prompt.
+
+2. **Automatic fact extraction** — when you say "I always use TypeScript," db0 extracts that as a durable fact. No manual save commands. Rules-based extraction, zero LLM calls.
+
+3. **Chat history handled by AI SDK** — message persistence uses `useChat` and `streamText` as intended. db0 doesn't replace this — it adds the memory layer on top.
 
 ## Run
 
 ```bash
-ANTHROPIC_API_KEY=sk-... npx tsx examples/chat-agent/index.ts
+cd examples/chat-agent
+npm install
 ```
 
-## Commands
+Create `.env.local`:
 
-| Command | What it does |
-|---|---|
-| `/new` | Start a new session — clears conversation history, keeps all memories |
-| `/memory` | Show all stored memories |
-| `/context` | Show what context would be packed for the LLM |
-| `/forget` | Delete all memories and start fresh |
-| `quit` | Exit |
+```
+OPENAI_API_KEY=sk-...
+```
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
 
 ## Try it
 
-```
-you: My name is Alice and I prefer dark mode
-you: I always use TypeScript with strict mode
-you: /memory              ← see what was extracted
-you: /new                 ← start fresh session
-you: What do you know about me?   ← memories are still there
-you: /context             ← see what the LLM receives
-you: Actually I switched to light mode   ← supersedes the old fact
-you: /memory              ← old fact marked [superseded]
-```
+1. Say: **"My name is Alice and I prefer concise bullet-point responses"**
+2. Reload the page (starts a new chat session)
+3. Ask: **"What do you know about me?"**
+
+The agent remembers your name and preference — pulled from db0's memory, not from the current chat history.
 
 ## How it works
 
-1. On each turn, `context().pack()` searches memory and assembles relevant facts into the system prompt
-2. After the LLM responds, `extraction().extract()` detects facts via signal-word matching
-3. Detected facts are written via `context().ingest()` with deduplication and contradiction detection
-4. `/new` creates a new harness with a fresh `sessionId` but the same backend — memory persists, conversation resets
-5. Memory persists in `./chat-agent.sqlite` — delete it to start completely fresh
+```
+User message
+  │
+  ├─ context().pack() → searches past memories, injects into system prompt
+  │
+  ▼
+  streamText() → LLM generates response
+  │
+  ├─ AI SDK streams response to client
+  │
+  ▼
+  onFinish → extraction().extract() → stores durable facts for future sessions
+```
+
+### Key files
+
+| File | What it does |
+|---|---|
+| `lib/db0.ts` | Singleton harness factory — SQLite backend, shared across requests |
+| `app/api/chat/route.ts` | API route — `context().pack()` before LLM call, fact extraction after |
+| `app/page.tsx` | Chat UI with `useChat` — standard AI SDK pattern |
+
+### What db0 adds (30 lines)
+
+```typescript
+// Before the LLM call — inject memories from past sessions
+const ctx = await harness.context().pack(lastUserMessage, { tokenBudget: 2000 });
+
+// In the system prompt
+const system = ctx.count > 0
+  ? `You are a helpful assistant.\n\nContext from past conversations:\n${ctx.text}`
+  : "You are a helpful assistant.";
+
+// After the LLM responds — extract facts for future sessions
+const facts = await extraction.extract(text);
+for (const fact of facts) {
+  await harness.context().ingest(fact.content, { scope: fact.scope });
+}
+```
+
+## Production
+
+SQLite works for local dev. For production (Vercel, Railway, etc.), swap to Postgres:
+
+```typescript
+// lib/db0.ts — one line change
+import { createPostgresBackend } from "@db0-ai/backends-postgres";
+
+const backend = await createPostgresBackend(process.env.DATABASE_URL!);
+```
+
+Note: SQLite does **not** work on Vercel serverless (no persistent disk). Use Neon or Supabase.
+
+## Inspect memories
+
+```bash
+npx @db0-ai/inspector --db ./memory.sqlite
+```
+
+Opens a web UI to browse, search, and manage stored memories.
