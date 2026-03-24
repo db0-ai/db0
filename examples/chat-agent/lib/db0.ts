@@ -5,12 +5,15 @@ import type { SqliteBackend } from "@db0-ai/backends-sqlite";
 
 let backend: SqliteBackend | null = null;
 
+async function getBackend(): Promise<SqliteBackend> {
+  if (!backend) {
+    backend = await createSqliteBackend({ dbPath: "./memory.sqlite" });
+  }
+  return backend;
+}
+
 /**
  * Get a db0 harness for a given chat session and user.
- *
- * The backend is shared (singleton) — all harnesses use the same SQLite file.
- * Each harness has its own sessionId for scope isolation, but user-scoped
- * memories are visible across all sessions for the same userId.
  */
 export async function getHarness({
   sessionId,
@@ -19,15 +22,27 @@ export async function getHarness({
   sessionId: string;
   userId: string;
 }): Promise<Harness> {
-  if (!backend) {
-    backend = await createSqliteBackend({ dbPath: "./memory.sqlite" });
-  }
-
+  const b = await getBackend();
   return db0.harness({
     agentId: "chat-agent",
     sessionId,
     userId,
-    backend,
+    backend: b,
+    embeddingFn: defaultEmbeddingFn,
+    profile: PROFILE_CONVERSATIONAL,
+  });
+}
+
+/**
+ * Get a shared harness for reading all memories (not session-specific).
+ */
+export async function getGlobalHarness(): Promise<Harness> {
+  const b = await getBackend();
+  return db0.harness({
+    agentId: "chat-agent",
+    sessionId: "_global",
+    userId: "demo-user",
+    backend: b,
     embeddingFn: defaultEmbeddingFn,
     profile: PROFILE_CONVERSATIONAL,
   });
