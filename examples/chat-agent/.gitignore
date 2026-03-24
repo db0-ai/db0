@@ -1,4 +1,6 @@
 node_modules/
 .next/
 *.sqlite
+*.json.bak
+chats.json
 .env.local

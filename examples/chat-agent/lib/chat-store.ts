@@ -1,10 +1,11 @@
 /**
- * Simple in-process chat message store.
+ * Chat message store backed by a JSON file.
  *
- * In a real app, you'd use a database. This is intentionally simple
- * to keep the focus on db0's memory system. Messages here are lost
- * on server restart — but db0 memories persist.
+ * Simple file-based persistence so chat history survives
+ * page refreshes and dev server restarts.
  */
+
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 
 export interface StoredMessage {
   id: string;
@@ -19,19 +20,35 @@ export interface ChatSession {
   messages: StoredMessage[];
 }
 
-const chats = new Map<string, ChatSession>();
+const STORE_PATH = "./chats.json";
+
+function load(): Map<string, ChatSession> {
+  if (!existsSync(STORE_PATH)) return new Map();
+  try {
+    const data = JSON.parse(readFileSync(STORE_PATH, "utf-8"));
+    return new Map(Object.entries(data));
+  } catch {
+    return new Map();
+  }
+}
+
+function save(chats: Map<string, ChatSession>) {
+  writeFileSync(STORE_PATH, JSON.stringify(Object.fromEntries(chats), null, 2));
+}
 
 export function listChats(): Omit<ChatSession, "messages">[] {
+  const chats = load();
   return Array.from(chats.values())
     .map(({ id, title, createdAt }) => ({ id, title, createdAt }))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
 export function getChat(id: string): ChatSession | null {
-  return chats.get(id) ?? null;
+  return load().get(id) ?? null;
 }
 
 export function saveChat(id: string, messages: StoredMessage[]): void {
+  const chats = load();
   const existing = chats.get(id);
   const title =
     existing?.title ??
@@ -44,4 +61,5 @@ export function saveChat(id: string, messages: StoredMessage[]): void {
     createdAt: existing?.createdAt ?? new Date().toISOString(),
     messages,
   });
+  save(chats);
 }
