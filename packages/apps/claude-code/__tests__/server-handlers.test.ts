@@ -118,6 +118,48 @@ describe("claude-code plugin: MCP tool handlers", () => {
     expect(results[0].tags).toContain("preference");
   });
 
+  // --- memory_update ---
+
+  it("updates a memory by searching and superseding", async () => {
+    const e1 = await defaultEmbeddingFn("User prefers Python");
+    const original = await harness.memory().write({
+      content: "User prefers Python",
+      scope: "user",
+      embedding: e1,
+    });
+
+    // Simulate what db0_memory_update does: search for old, supersede, write new
+    const oldEmbedding = await defaultEmbeddingFn("User prefers Python");
+    const candidates = await harness.memory().search({
+      embedding: oldEmbedding,
+      scope: ["user"],
+      limit: 1,
+    });
+    expect(candidates.length).toBeGreaterThan(0);
+
+    const newEmbedding = await defaultEmbeddingFn("User prefers TypeScript");
+    const updated = await harness.memory().write({
+      content: "User prefers TypeScript",
+      scope: "user",
+      embedding: newEmbedding,
+      supersedes: candidates[0].id,
+    });
+
+    // Old memory should be superseded
+    const oldEntry = await harness.memory().get(original.id);
+    expect(oldEntry!.status).toBe("superseded");
+
+    // Search should only return the new one
+    const results = await harness.memory().search({
+      embedding: newEmbedding,
+      scope: ["user"],
+      limit: 5,
+    });
+    const active = results.filter((r) => r.status === "active");
+    expect(active.some((r) => r.content === "User prefers TypeScript")).toBe(true);
+    expect(active.some((r) => r.content === "User prefers Python")).toBe(false);
+  });
+
   // --- memory_list ---
 
   it("lists memories by scope", async () => {

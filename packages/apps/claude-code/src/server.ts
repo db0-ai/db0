@@ -205,6 +205,35 @@ const TOOLS = [
     },
   },
   {
+    name: "db0_memory_update",
+    description:
+      "Update a memory — searches for the existing fact, supersedes it, and writes the new version. Use when a fact has changed (e.g., 'I switched from Python to TypeScript'). The old fact is preserved for audit but excluded from future searches.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        oldContent: {
+          type: "string",
+          description: "What the old fact was about — used to find it via semantic search",
+        },
+        newContent: {
+          type: "string",
+          description: "The updated fact",
+        },
+        scope: {
+          type: "string",
+          enum: ["task", "session", "user", "agent"],
+          description: "Memory scope (default: user)",
+        },
+        tags: {
+          type: "array",
+          items: { type: "string" },
+          description: "Optional tags",
+        },
+      },
+      required: ["oldContent", "newContent"],
+    },
+  },
+  {
     name: "db0_memory_stats",
     description:
       "Get memory statistics — count by scope and status. Useful for understanding the current state of agent memory.",
@@ -341,6 +370,36 @@ async function handleTool(
     case "db0_memory_delete": {
       await h.memory().delete(args.id as string);
       return { deleted: true, id: args.id };
+    }
+
+    case "db0_memory_update": {
+      const scope = (args.scope as MemoryScope) ?? "user";
+      // Find the old memory
+      const oldEmbedding = await embeddingFn(args.oldContent as string);
+      const candidates = await h.memory().search({
+        embedding: oldEmbedding,
+        scope: [scope],
+        limit: 1,
+      });
+
+      // Write the new fact, superseding the old one if found
+      const newEmbedding = await embeddingFn(args.newContent as string);
+      const entry = await h.memory().write({
+        content: args.newContent as string,
+        scope,
+        embedding: newEmbedding,
+        tags: (args.tags as string[]) ?? undefined,
+        supersedes: candidates.length > 0 ? candidates[0].id : undefined,
+      });
+
+      return {
+        id: entry.id,
+        scope: entry.scope,
+        superseded: candidates.length > 0
+          ? { id: candidates[0].id, content: candidates[0].content }
+          : null,
+        newContent: args.newContent,
+      };
     }
 
     case "db0_memory_stats": {
