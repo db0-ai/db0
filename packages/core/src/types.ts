@@ -23,6 +23,7 @@ export type MemoryExtractionMethod =
   | "manual"
   | "preserve"
   | "reconcile"
+  | "consolidate"
   | "fallback";
 
 // === Memory ===
@@ -770,6 +771,17 @@ export interface Db0Profile {
      * Higher values → less overhead, slower convergence.
      */
     reconcileInterval?: number;
+    /**
+     * Min embedding similarity to cluster memories for LLM consolidation.
+     * Only used when consolidateFn is configured on the harness.
+     * Higher values → tighter clusters, fewer merges.
+     * Default: 0.75.
+     */
+    consolidateThreshold?: number;
+    /** Min memories per cluster to trigger LLM merge. Default: 2. */
+    consolidateMinCluster?: number;
+    /** Max clusters to process per reconcile() call. Default: 10. */
+    consolidateMaxClusters?: number;
   };
 }
 
@@ -915,7 +927,22 @@ export interface ContextReconcileResult {
   promoted: number;
   merged: number;
   contradictionsCleaned: number;
+  /** Number of memory clusters merged via consolidateFn. 0 if consolidateFn not configured. */
+  consolidated: number;
+  /** Number of individual memories superseded by consolidation. */
+  consolidatedMemories: number;
 }
+
+/** Function that merges a cluster of related memories into one. */
+export type ConsolidateFn = (memories: Array<{
+  content: string;
+  scope: MemoryScope;
+  tags: string[];
+  createdAt: string;
+}>) => Promise<{
+  content: string;
+  tags?: string[];
+}>;
 
 // === Harness Config ===
 export interface HarnessConfig {
@@ -945,4 +972,10 @@ export interface HarnessConfig {
    * If omitted, wraps embeddingFn sequentially.
    */
   batchEmbeddingFn?: BatchEmbeddingFn;
+  /**
+   * LLM function for memory consolidation. When provided, reconcile() clusters
+   * semantically similar memories and calls this function to merge each cluster
+   * into a single fact. Without it, reconcile() only does exact-match dedup.
+   */
+  consolidateFn?: ConsolidateFn;
 }

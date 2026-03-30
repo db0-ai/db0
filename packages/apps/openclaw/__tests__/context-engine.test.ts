@@ -707,7 +707,7 @@ describe("Db0ContextEngine", () => {
     it("reconcile() returns stats even with no work", async () => {
       await engine.bootstrap(bootstrapParams);
       const result = await engine.reconcile("session-1");
-      expect(result).toEqual({ promoted: 0, merged: 0, contradictionsCleaned: 0 });
+      expect(result).toEqual({ promoted: 0, merged: 0, contradictionsCleaned: 0, consolidated: 0, consolidatedMemories: 0 });
     });
 
     it("reconcile() merges duplicate facts across tiers", async () => {

@@ -101,6 +101,7 @@ export class Harness {
         embeddingFn,
         batchEmbeddingFn,
         this.config.profile ?? {},
+        this.config.consolidateFn,
       );
     }
     return this._context;
