@@ -326,6 +326,28 @@ export interface Db0PluginConfig {
     /** Run reconciliation every N turns when autoReconcile is true. Default: 25 */
     reconcileInterval?: number;
   };
+
+  /**
+   * LLM function for memory consolidation. When provided, reconcile() clusters
+   * semantically similar memories and calls this function to merge each cluster
+   * into a single, concise fact. Without it, reconcile() only does exact-match dedup.
+   *
+   * @example
+   * db0({
+   *   consolidateFn: async (memories) => {
+   *     const response = await callYourLLM(
+   *       `Merge these facts into one:\n${memories.map(m => m.content).join("\n")}`
+   *     );
+   *     return { content: response.text };
+   *   }
+   * })
+   */
+  consolidateFn?: (memories: Array<{
+    content: string;
+    scope: "task" | "session" | "user" | "agent";
+    tags: string[];
+    createdAt: string;
+  }>) => Promise<{ content: string; tags?: string[] }>;
 }
 
 // === Implementation ===
@@ -472,6 +494,7 @@ export class Db0ContextEngine implements ContextEngine {
         embeddingFn: this.embeddingFn,
         batchEmbeddingFn: batchEmbedFn,
         profile: this.profile ?? undefined,
+        consolidateFn: this.config.consolidateFn,
       });
 
       await this.harness.log().append({
