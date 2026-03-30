@@ -12,6 +12,8 @@ import {
   getStats,
   explainMemory,
   getIntegrityReport,
+  getConsolidationCandidates,
+  getConsolidationHistory,
   exportMemories,
   importMemories,
   type ApiContext,
@@ -208,6 +210,24 @@ export class InspectorServer {
       const result = await importMemories(this.ctx, body);
       res.writeHead(200);
       res.end(JSON.stringify(result));
+      return;
+    }
+
+    // GET /api/consolidation/candidates
+    if (path === "/api/consolidation/candidates" && method === "GET") {
+      const threshold = url.searchParams.has("threshold") ? Number(url.searchParams.get("threshold")) : undefined;
+      const minCluster = url.searchParams.has("minCluster") ? Number(url.searchParams.get("minCluster")) : undefined;
+      const candidates = await getConsolidationCandidates(this.ctx, { threshold, minCluster });
+      res.writeHead(200);
+      res.end(JSON.stringify(candidates));
+      return;
+    }
+
+    // GET /api/consolidation/history
+    if (path === "/api/consolidation/history" && method === "GET") {
+      const history = await getConsolidationHistory(this.ctx);
+      res.writeHead(200);
+      res.end(JSON.stringify(history));
       return;
     }
 
