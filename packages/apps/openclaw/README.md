@@ -34,6 +34,24 @@ Out of the box, zero configuration:
 - **Sub-agents collaborate** — parent and child share memory automatically
 - **Nothing is lost to compaction** — facts are extracted before messages are discarded
 - **You can see what it knows** — inspector UI, CLI, and structured logs for full visibility
+- **Memory consolidation** — related facts are automatically clustered and merged over time (with `consolidateFn`)
+
+## Memory Consolidation
+
+When you provide a `consolidateFn`, db0 clusters semantically similar memories and merges them via your LLM. Three memories about TypeScript preferences become one concise fact. Runs as part of `reconcile()` — no extra calls needed.
+
+```typescript
+db0({
+  consolidateFn: async (memories) => {
+    const response = await callGemini(
+      `Merge these related facts into one concise statement:\n${memories.map(m => m.content).join("\n")}`
+    );
+    return { content: response.text };
+  }
+})
+```
+
+Without `consolidateFn`, reconcile only does exact-match dedup — same as before, zero LLM calls.
 
 ## Upgrade Embeddings
 

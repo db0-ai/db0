@@ -184,6 +184,10 @@ const memory = await createDb0({
   agentId: "my-agent",         // default: "langchain"
   userId: "user-123",          // default: "default"
   extractFacts: true,          // auto-extract from chat history (default: true)
+  consolidateFn: async (memories) => {  // optional: LLM-assisted memory merging
+    const res = await llm.invoke(`Merge these facts into one:\n${memories.map(m => m.content).join("\n")}`);
+    return { content: res.content as string };
+  },
 });
 ```
 
