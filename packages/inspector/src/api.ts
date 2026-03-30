@@ -350,6 +350,132 @@ export interface ExportData {
   }>;
 }
 
+// === Consolidation ===
+
+export interface ConsolidationGroup {
+  memories: Array<{
+    id: string;
+    content: string;
+    scope: string;
+    tags: string[];
+    createdAt: string;
+  }>;
+  avgSimilarity: number;
+}
+
+export interface ConsolidationHistory {
+  id: string;
+  content: string;
+  mergedFrom: string[];
+  originalContents: string[];
+  consolidatedAt: string;
+  clusterSize: number;
+}
+
+/**
+ * Find clusters of similar memories that could be consolidated.
+ * These are candidates — semantically similar but not yet merged.
+ */
+export async function getConsolidationCandidates(
+  ctx: ApiContext,
+  params?: { threshold?: number; minCluster?: number },
+): Promise<ConsolidationGroup[]> {
+  const agentId = ctx.agentId;
+  if (!agentId) return [];
+
+  const all = await ctx.backend.memoryList(agentId);
+  const active = all.filter(
+    (m) =>
+      m.status === "active" &&
+      !m.tags.includes("file-chunk") &&
+      !m.tags.includes("file-snapshot") &&
+      m.embedding != null &&
+      m.extractionMethod !== "consolidate",
+  );
+
+  const threshold = params?.threshold ?? 0.75;
+  const minCluster = params?.minCluster ?? 2;
+
+  // Greedy clustering
+  const visited = new Set<string>();
+  const groups: ConsolidationGroup[] = [];
+
+  for (const mem of active) {
+    if (visited.has(mem.id)) continue;
+    const cluster = [mem];
+    visited.add(mem.id);
+    let totalSim = 0;
+    let simCount = 0;
+
+    for (const other of active) {
+      if (visited.has(other.id)) continue;
+      const sim = safeCosine(mem.embedding, other.embedding);
+      if (sim >= threshold) {
+        cluster.push(other);
+        visited.add(other.id);
+        totalSim += sim;
+        simCount++;
+      }
+    }
+
+    if (cluster.length >= minCluster) {
+      groups.push({
+        memories: cluster.map((m) => ({
+          id: m.id,
+          content: typeof m.content === "string" ? m.content : JSON.stringify(m.content),
+          scope: m.scope,
+          tags: m.tags,
+          createdAt: m.createdAt,
+        })),
+        avgSimilarity: simCount > 0 ? totalSim / simCount : 1,
+      });
+    }
+  }
+
+  return groups.sort((a, b) => b.memories.length - a.memories.length);
+}
+
+/**
+ * Get consolidation history — memories created via consolidation,
+ * with their original source memories.
+ */
+export async function getConsolidationHistory(
+  ctx: ApiContext,
+): Promise<ConsolidationHistory[]> {
+  const agentId = ctx.agentId;
+  if (!agentId) return [];
+
+  const all = await ctx.backend.memoryList(agentId);
+  const consolidated = all.filter((m) => m.extractionMethod === "consolidate" && m.status === "active");
+
+  const history: ConsolidationHistory[] = [];
+
+  for (const mem of consolidated) {
+    const mergedFrom = (mem.metadata?.mergedFrom as string[]) ?? [];
+    const originalContents: string[] = [];
+
+    for (const origId of mergedFrom) {
+      const orig = await ctx.backend.memoryGet(origId);
+      if (orig) {
+        originalContents.push(
+          typeof orig.content === "string" ? orig.content : JSON.stringify(orig.content),
+        );
+      }
+    }
+
+    history.push({
+      id: mem.id,
+      content: typeof mem.content === "string" ? mem.content : JSON.stringify(mem.content),
+      mergedFrom,
+      originalContents,
+      consolidatedAt: (mem.metadata?.consolidatedAt as string) ?? mem.createdAt,
+      clusterSize: (mem.metadata?.clusterSize as number) ?? mergedFrom.length,
+    });
+  }
+
+  return history.sort((a, b) => b.consolidatedAt.localeCompare(a.consolidatedAt));
+}
+
 export async function exportMemories(ctx: ApiContext): Promise<ExportData> {
   const agentId = ctx.agentId;
   if (!agentId) throw new Error("No agentId configured");

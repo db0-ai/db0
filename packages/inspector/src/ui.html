@@ -1150,6 +1150,10 @@ body {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18"/><path d="M8 7l4-4 4 4"/><path d="M8 17l4 4 4-4"/><rect x="2" y="9" width="5" height="6" rx="1"/><rect x="17" y="9" width="5" height="6" rx="1"/></svg>
         Manage
       </button>
+      <button class="view-nav-item" data-view="consolidation">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+        Consolidation
+      </button>
       <button class="view-nav-item" data-view="config">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1"/></svg>
         Config
@@ -1393,6 +1397,7 @@ body {
   function renderView() {
     const main = document.getElementById('main');
     if (currentView === 'dashboard') renderDashboard(main);
+    else if (currentView === 'consolidation') renderConsolidation(main);
     else if (currentView === 'manage') renderManage(main);
     else if (currentView === 'config') renderConfig(main);
     else renderMemoryList(main);
@@ -1533,6 +1538,109 @@ body {
     }
     html += '</div>';
     return html;
+  }
+
+  // ── Consolidation view ──
+  function renderConsolidation(main) {
+    main.innerHTML = '<div class="dashboard"><div class="dash-card" style="grid-column:1/-1;text-align:center;color:var(--muted)">Loading consolidation data...</div></div>';
+
+    Promise.all([
+      fetch('/api/consolidation/candidates').then(r => r.json()),
+      fetch('/api/consolidation/history').then(r => r.json()),
+      fetch('/api/stats').then(r => r.json()),
+    ]).then(([candidates, history, statsData]) => {
+      const totalConsolidated = statsData.byExtractionMethod?.consolidate || 0;
+      const totalActive = statsData.byStatus?.active || 0;
+
+      let html = '<div class="dashboard">';
+
+      // Stats row
+      html += `
+        <div class="dash-card">
+          <div class="dash-card-value" style="color:var(--green)">${totalConsolidated}</div>
+          <div class="dash-card-label">Consolidated</div>
+        </div>
+        <div class="dash-card">
+          <div class="dash-card-value">${candidates.length}</div>
+          <div class="dash-card-label">Candidate Clusters</div>
+        </div>
+        <div class="dash-card">
+          <div class="dash-card-value">${candidates.reduce((s, c) => s + c.memories.length, 0)}</div>
+          <div class="dash-card-label">Memories to Consolidate</div>
+        </div>
+        <div class="dash-card">
+          <div class="dash-card-value">${history.length}</div>
+          <div class="dash-card-label">Consolidation Events</div>
+        </div>
+      `;
+
+      // Consolidation history — before and after
+      if (history.length > 0) {
+        html += '<div class="dash-card" style="grid-column:1/-1">';
+        html += '<div class="dash-card-title">Consolidation History</div>';
+        html += '<div style="font-size:12px;color:var(--muted);margin-bottom:12px">Merged memories with before/after comparison</div>';
+
+        for (const h of history) {
+          html += `<div style="border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:10px">`;
+
+          // Result (after)
+          html += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+            <span style="font-size:10px;padding:2px 6px;border-radius:3px;background:var(--green);color:#000;font-weight:600">RESULT</span>
+            <span style="font-size:10px;color:var(--muted)">${new Date(h.consolidatedAt).toLocaleString()}</span>
+          </div>`;
+          html += `<div style="font-size:13px;line-height:1.5;margin-bottom:10px">${esc(h.content)}</div>`;
+
+          // Originals (before)
+          html += `<div style="font-size:10px;color:var(--muted);margin-bottom:6px">Merged from ${h.clusterSize} memories:</div>`;
+          for (const orig of h.originalContents) {
+            html += `<div style="font-size:12px;color:var(--muted2);padding:6px 8px;background:var(--bg2);border-radius:4px;margin-bottom:4px;border-left:3px solid var(--border)">${esc(orig)}</div>`;
+          }
+
+          html += '</div>';
+        }
+
+        html += '</div>';
+      }
+
+      // Candidates — clusters that could be consolidated
+      if (candidates.length > 0) {
+        html += '<div class="dash-card" style="grid-column:1/-1">';
+        html += '<div class="dash-card-title">Consolidation Candidates</div>';
+        html += '<div style="font-size:12px;color:var(--muted);margin-bottom:12px">Clusters of similar memories that could be merged. Enable <code style="font-size:11px;background:var(--bg2);padding:1px 4px;border-radius:3px">consolidateFn</code> to merge automatically.</div>';
+
+        for (const group of candidates) {
+          html += `<div style="border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:10px">`;
+          html += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+            <span style="font-size:10px;padding:2px 6px;border-radius:3px;background:var(--amber);color:#000;font-weight:600">${group.memories.length} MEMORIES</span>
+            <span style="font-size:10px;color:var(--muted)">~${Math.round(group.avgSimilarity * 100)}% similar</span>
+          </div>`;
+
+          for (const mem of group.memories) {
+            html += `<div style="font-size:12px;padding:6px 8px;background:var(--bg2);border-radius:4px;margin-bottom:4px;display:flex;align-items:center;gap:6px;cursor:pointer" onclick="window.__openMemory('${mem.id}')">
+              <span style="font-size:9px;padding:1px 4px;border-radius:2px;background:${{user:'#e8a855',session:'#4ecdc4',agent:'#a78bfa',task:'#6b9bd2'}[mem.scope]||'#888'};color:#fff;text-transform:uppercase;font-weight:600">${mem.scope}</span>
+              <span style="flex:1;color:var(--text)">${esc(mem.content.slice(0, 120))}</span>
+            </div>`;
+          }
+
+          html += '</div>';
+        }
+
+        html += '</div>';
+      }
+
+      // Empty state
+      if (history.length === 0 && candidates.length === 0) {
+        html += `<div class="dash-card" style="grid-column:1/-1;text-align:center">
+          <div style="font-size:14px;color:var(--muted);padding:20px 0">No consolidation activity yet.</div>
+          <div style="font-size:12px;color:var(--muted2)">Add a <code style="font-size:11px;background:var(--bg2);padding:1px 4px;border-radius:3px">consolidateFn</code> to your harness config to enable LLM-assisted memory merging.</div>
+        </div>`;
+      }
+
+      html += '</div>';
+      main.innerHTML = html;
+    }).catch(() => {
+      main.innerHTML = '<div class="dashboard"><div class="dash-card" style="grid-column:1/-1;text-align:center;color:var(--red)">Failed to load consolidation data</div></div>';
+    });
   }
 
   // ── Manage view ──
