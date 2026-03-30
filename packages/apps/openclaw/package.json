@@ -1,6 +1,6 @@
 {
   "name": "@db0-ai/openclaw",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "db0 memory plugin for OpenClaw. Persistent scoped memory, automatic fact extraction, sub-agent support, compaction safety.",
   "type": "module",
   "main": "./dist/index.js",
@@ -31,8 +31,8 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@db0-ai/backends-sqlite": "0.2.3",
-    "@db0-ai/core": "0.2.3",
+    "@db0-ai/backends-sqlite": "0.3.0",
+    "@db0-ai/core": "0.3.0",
     "debug": "^4.4.3"
   }
 }

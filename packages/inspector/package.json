@@ -1,6 +1,6 @@
 {
   "name": "@db0-ai/inspector",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "Visual memory inspector for db0. Browse, search, and manage AI agent memories in a web UI with dashboard and health reports.",
   "type": "module",
   "main": "./dist/index.js",
@@ -24,7 +24,7 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@db0-ai/core": "0.2.3",
-    "@db0-ai/backends-sqlite": "0.2.3"
+    "@db0-ai/core": "0.3.0",
+    "@db0-ai/backends-sqlite": "0.3.0"
   }
 }

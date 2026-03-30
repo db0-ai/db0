@@ -1,5 +1,11 @@
 # @db0-ai/core
 
+## 1.0.0
+
+### Minor Changes
+
+- Memory consolidation: extend reconcile() with opt-in LLM-assisted merging of semantically similar memories.
+
 ## 0.2.3
 
 ### Patch Changes

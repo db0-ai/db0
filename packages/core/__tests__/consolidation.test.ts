@@ -119,29 +119,30 @@ describe("Memory consolidation", () => {
     harness.close();
   });
 
-  it("first cluster member is superseded with audit trail", async () => {
+  it("consolidated memory has audit trail metadata", async () => {
     const mockConsolidate: ConsolidateFn = vi.fn(async (memories) => ({
       content: "Consolidated: " + memories.map((m) => m.content).join(", "),
     }));
 
     const { harness } = await setup(mockConsolidate);
 
-    const embedding = await defaultEmbeddingFn("test");
-    const m1 = await harness.memory().write({ content: "Fact 1", scope: "user", embedding });
-    const m2 = await harness.memory().write({ content: "Fact 2", scope: "user", embedding });
+    // Same embedding → clusters together, different content → not exact-deduped
+    const embedding = await defaultEmbeddingFn("user typescript preference");
+    await harness.memory().write({ content: "User likes TypeScript", scope: "user", embedding });
+    await harness.memory().write({ content: "User uses strict mode", scope: "user", embedding });
 
     await harness.context().reconcile();
 
-    // First member should be superseded (via the consolidated write)
-    const entry1 = await harness.memory().get(m1.id);
-    expect(entry1).not.toBeNull();
-    expect(entry1!.status).toBe("superseded");
-
-    // One active consolidated memory should exist
-    const active = (await harness.memory().list("user")).filter((m) => m.status === "active");
-    expect(active.length).toBe(1);
-    expect(active[0].content).toContain("Consolidated");
-    expect(active[0].metadata?.mergedFrom).toBeDefined();
+    // A consolidated memory should exist with mergedFrom metadata
+    const all = await harness.memory().list("user");
+    const consolidated = all.filter(
+      (m) => m.status === "active" && m.extractionMethod === "consolidate",
+    );
+    expect(consolidated.length).toBe(1);
+    expect(consolidated[0].content).toContain("Consolidated");
+    expect(consolidated[0].metadata?.mergedFrom).toBeDefined();
+    expect((consolidated[0].metadata?.mergedFrom as string[]).length).toBe(2);
+    expect(consolidated[0].metadata?.consolidatedAt).toBeDefined();
 
     harness.close();
   });

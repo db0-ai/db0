@@ -1,6 +1,6 @@
 {
   "name": "@db0-ai/core",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "Agent-native data layer SDK. Persistent memory with scoping and superseding, execution state with branching, context assembly with token budgets. SQLite and PostgreSQL. Works with Vercel AI SDK, LangChain.js, and any TypeScript agent.",
   "keywords": [
     "ai",
