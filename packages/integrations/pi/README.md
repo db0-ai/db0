@@ -155,6 +155,10 @@ import { createDb0PiExtension } from "@db0-ai/pi";
 const ext = await createDb0PiExtension({
   dbPath: "~/.pi/agent/db0.sqlite",  // default
   tokenBudget: 1500,                  // tokens for context injection
+  consolidateFn: async (memories) => {  // optional: LLM-assisted memory merging
+    const res = await callOllama(`Merge these facts:\n${memories.map(m => m.content).join("\n")}`);
+    return { content: res };
+  },
 });
 ```
 

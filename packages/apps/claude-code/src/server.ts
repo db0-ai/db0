@@ -278,6 +278,15 @@ const TOOLS = [
       },
     },
   },
+  {
+    name: "db0_memory_consolidate",
+    description:
+      "Run memory maintenance — promotes frequently-accessed chunks, merges exact duplicates, and cleans stale edges. Call periodically during long sessions to keep memory clean.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {},
+    },
+  },
 ];
 
 // === Tool handlers ===
@@ -447,6 +456,17 @@ async function handleTool(
         data: e.data,
         createdAt: e.createdAt,
       }));
+    }
+
+    case "db0_memory_consolidate": {
+      const result = await h.context().reconcile();
+      return {
+        promoted: result.promoted,
+        merged: result.merged,
+        contradictionsCleaned: result.contradictionsCleaned,
+        consolidated: result.consolidated,
+        consolidatedMemories: result.consolidatedMemories,
+      };
     }
 
     default:

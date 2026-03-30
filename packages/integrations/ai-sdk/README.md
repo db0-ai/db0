@@ -134,6 +134,10 @@ const memory = await createDb0({
   userId: "user-123",            // default: "default"
   tokenBudget: 2000,             // tokens for packed memories (default: 1500)
   extractOnResponse: true,       // auto-extract facts (default: true)
+  consolidateFn: async (memories) => {  // optional: LLM-assisted memory merging
+    const res = await generateText({ model, prompt: `Merge: ${memories.map(m => m.content).join("; ")}` });
+    return { content: res.text };
+  },
 });
 ```
 

@@ -1,5 +1,6 @@
 import type {
   BatchEmbeddingFn,
+  ConsolidateFn,
   ContextIngestOpts,
   ContextIngestResult,
   ContextPackOpts,
@@ -15,6 +16,7 @@ import type {
   MemorySourceType,
   PreserveMessage,
 } from "../types.js";
+import { cosineSimilarity } from "../util/cosine.js";
 import { extractEntities } from "../extraction/index.js";
 import type { Harness } from "../harness.js";
 
@@ -34,17 +36,20 @@ export class Context {
   private embeddingFn: EmbeddingFn;
   private batchEmbeddingFn: BatchEmbeddingFn;
   private profile: Db0Profile;
+  private consolidateFn?: ConsolidateFn;
 
   constructor(
     harness: Harness,
     embeddingFn: EmbeddingFn,
     batchEmbeddingFn: BatchEmbeddingFn,
     profile: Db0Profile,
+    consolidateFn?: ConsolidateFn,
   ) {
     this.harness = harness;
     this.embeddingFn = embeddingFn;
     this.batchEmbeddingFn = batchEmbeddingFn;
     this.profile = profile;
+    this.consolidateFn = consolidateFn;
   }
 
   /**
@@ -380,6 +385,84 @@ export class Context {
       }
     }
 
+    // Step 2b: LLM-assisted consolidation (if consolidateFn configured)
+    let consolidated = 0;
+    let consolidatedMemories = 0;
+
+    if (this.consolidateFn) {
+      const consolidateCfg = cfg;
+      const clusterThreshold = consolidateCfg.consolidateThreshold ?? 0.75;
+      const minClusterSize = consolidateCfg.consolidateMinCluster ?? 2;
+      const maxClusters = consolidateCfg.consolidateMaxClusters ?? 10;
+
+      // Get remaining active facts (exclude chunks, snapshots, no embedding)
+      const consolidatable = allMemories.filter(
+        (m) =>
+          m.status === "active" &&
+          !m.tags.includes("file-chunk") &&
+          !m.tags.includes("file-snapshot") &&
+          m.embedding != null,
+      );
+
+      // Cluster by embedding similarity
+      const clusters = clusterMemories(consolidatable, clusterThreshold);
+      const eligibleClusters = clusters
+        .filter((c) => c.length >= minClusterSize)
+        .sort((a, b) => b.length - a.length)
+        .slice(0, maxClusters);
+
+      for (const cluster of eligibleClusters) {
+        try {
+          const result = await this.consolidateFn(
+            cluster.map((m) => ({
+              content: typeof m.content === "string" ? m.content : JSON.stringify(m.content),
+              scope: m.scope,
+              tags: m.tags,
+              createdAt: m.createdAt,
+            })),
+          );
+
+          // Use the highest-priority scope from the cluster
+          const scopePriority: Record<string, number> = { agent: 0, user: 1, session: 2, task: 3 };
+          const bestScope = cluster.reduce((best, m) =>
+            (scopePriority[m.scope] ?? 99) < (scopePriority[best.scope] ?? 99) ? m : best,
+          ).scope;
+
+          // Embed the merged content
+          const embedding = await this.embeddingFn(result.content);
+
+          // Write the consolidated memory, superseding the first cluster member
+          await this.harness.memory().write({
+            content: result.content,
+            scope: bestScope,
+            embedding,
+            tags: result.tags ?? cluster[0].tags,
+            supersedes: cluster[0].id,
+            extractionMethod: "consolidate",
+            metadata: {
+              mergedFrom: cluster.map((m) => m.id),
+              consolidatedAt: new Date().toISOString(),
+              clusterSize: cluster.length,
+            },
+          });
+
+          // Delete remaining cluster members (first was superseded by write above)
+          for (let i = 1; i < cluster.length; i++) {
+            try {
+              await this.harness.memory().delete(cluster[i].id);
+            } catch {
+              // Non-fatal — may already be deleted
+            }
+          }
+
+          consolidated++;
+          consolidatedMemories += cluster.length;
+        } catch {
+          // LLM call failed — skip this cluster, non-fatal
+        }
+      }
+    }
+
     // Step 3: Clean stale contradiction edges
     const contradictionCandidates = allMemories.filter(
       (m) =>
@@ -404,7 +487,7 @@ export class Context {
       }
     }
 
-    return { promoted, merged, contradictionsCleaned };
+    return { promoted, merged, contradictionsCleaned, consolidated, consolidatedMemories };
   }
 
   // === Private helpers ===
@@ -446,6 +529,37 @@ export class Context {
 
 function normalizeText(text: string): string {
   return text.toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Simple greedy clustering by embedding similarity.
+ * Groups memories where pairwise similarity ≥ threshold.
+ * O(n²) but memory counts per user are typically <1000.
+ */
+function clusterMemories<T extends { id: string; embedding?: Float32Array | null }>(
+  memories: T[],
+  threshold: number,
+): T[][] {
+  const visited = new Set<string>();
+  const clusters: T[][] = [];
+
+  for (const mem of memories) {
+    if (visited.has(mem.id) || !mem.embedding) continue;
+    const cluster: T[] = [mem];
+    visited.add(mem.id);
+
+    for (const other of memories) {
+      if (visited.has(other.id) || !other.embedding) continue;
+      if (cosineSimilarity(mem.embedding, other.embedding) >= threshold) {
+        cluster.push(other);
+        visited.add(other.id);
+      }
+    }
+
+    clusters.push(cluster);
+  }
+
+  return clusters;
 }
 
 function hasNegation(text: string): boolean {

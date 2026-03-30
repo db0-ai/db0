@@ -53,6 +53,7 @@ You don't need to say "call db0_memory_write." Just state your preferences, make
 - **Claude remembers across sessions** — preferences, decisions, project context persist
 - **Facts stay current** — when things change, old facts are superseded with full audit trail
 - **Semantic search** — Claude finds relevant memories by meaning, not just keywords
+- **Memory consolidation** — related facts are merged over time, keeping memory clean
 - **Full visibility** — inspector UI and CLI to browse what Claude knows
 
 ## Tools
@@ -66,6 +67,7 @@ You don't need to say "call db0_memory_write." Just state your preferences, make
 | `db0_memory_get` | Get a specific memory by ID |
 | `db0_memory_delete` | Delete a memory |
 | `db0_memory_stats` | Memory statistics by scope and status |
+| `db0_memory_consolidate` | Run memory maintenance — merge duplicates, promote chunks, clean edges |
 | `db0_state_checkpoint` | Create a state checkpoint |
 | `db0_state_restore` | Restore the most recent checkpoint |
 | `db0_log_query` | Query structured log entries |

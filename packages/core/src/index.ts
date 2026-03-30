@@ -78,6 +78,7 @@ export type {
   ContextPreserveResult,
   ContextReconcileOpts,
   ContextReconcileResult,
+  ConsolidateFn,
   MemorySourceType,
   MemoryExtractionMethod,
 } from "./types.js";

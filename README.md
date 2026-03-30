@@ -199,7 +199,7 @@ The context lifecycle — what goes into the LLM's context window and what gets 
 | **`ingest`** | Write a fact with deduplication, contradiction detection, and entity enrichment |
 | **`pack`** | Assemble relevant memories into a token budget with relationship annotations |
 | **`preserve`** | Batch-extract and batch-embed facts from conversation messages before compaction |
-| **`reconcile`** | Background maintenance — promote high-access chunks, merge duplicates, clean stale edges |
+| **`reconcile`** | Background maintenance — promote high-access chunks, merge duplicates, clean stale edges. With `consolidateFn`: clusters similar memories and merges them via LLM |
 
 ### State
 

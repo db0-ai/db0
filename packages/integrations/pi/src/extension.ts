@@ -16,7 +16,7 @@
  */
 
 import { db0, defaultEmbeddingFn, PROFILE_CODING_ASSISTANT } from "@db0-ai/core";
-import type { Harness, EmbeddingFn, Db0Profile, Db0Backend } from "@db0-ai/core";
+import type { Harness, EmbeddingFn, Db0Profile, Db0Backend, ConsolidateFn } from "@db0-ai/core";
 import { createSqliteBackend } from "@db0-ai/backends-sqlite";
 
 export interface Db0PiExtensionOptions {
@@ -30,6 +30,8 @@ export interface Db0PiExtensionOptions {
   profile?: Db0Profile;
   /** Token budget for context injection. Default: 1500 */
   tokenBudget?: number;
+  /** LLM function for memory consolidation. When provided, reconcile() merges semantically similar memories. */
+  consolidateFn?: ConsolidateFn;
 }
 
 /**
@@ -57,6 +59,7 @@ export async function createDb0PiExtension(
   } = options;
 
   const backend = options.backend ?? await createSqliteBackend({ dbPath });
+  const consolidateFn = options.consolidateFn;
 
   let harness = db0.harness({
     agentId: "pi",
@@ -65,6 +68,7 @@ export async function createDb0PiExtension(
     backend,
     embeddingFn,
     profile,
+    consolidateFn,
   });
 
   /**
@@ -213,6 +217,7 @@ export async function createDb0PiExtension(
         backend,
         embeddingFn,
         profile,
+        consolidateFn,
       });
     });
 
