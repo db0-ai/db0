@@ -9,7 +9,7 @@
  */
 
 import { db0, defaultEmbeddingFn, PROFILE_CONVERSATIONAL } from "@db0-ai/core";
-import type { Harness, EmbeddingFn, Db0Profile, Db0Backend } from "@db0-ai/core";
+import type { Harness, EmbeddingFn, Db0Profile, Db0Backend, ConsolidateFn } from "@db0-ai/core";
 import { createSqliteBackend } from "@db0-ai/backends-sqlite";
 import { db0MemoryTools } from "./tools.js";
 import { Db0ChatMessageHistory } from "./chat-history.js";
@@ -31,6 +31,8 @@ export interface CreateDb0Options {
   profile?: Db0Profile;
   /** Extract facts from chat history automatically. Default: true */
   extractFacts?: boolean;
+  /** LLM function for memory consolidation. When provided, reconcile() merges semantically similar memories. */
+  consolidateFn?: ConsolidateFn;
 }
 
 export interface Db0Instance {
@@ -60,6 +62,7 @@ export async function createDb0(
   } = options;
 
   const backend = options.backend ?? await createSqliteBackend({ dbPath });
+  const consolidateFn = options.consolidateFn;
 
   let harness = db0.harness({
     agentId,
@@ -68,6 +71,7 @@ export async function createDb0(
     backend,
     embeddingFn,
     profile,
+    consolidateFn,
   });
 
   let chatHistory = new Db0ChatMessageHistory({ harness, extractFacts });
@@ -84,6 +88,7 @@ export async function createDb0(
         backend,
         embeddingFn,
         profile,
+        consolidateFn,
       });
       chatHistory = new Db0ChatMessageHistory({ harness, extractFacts });
       return { harness, chatHistory };

@@ -18,7 +18,7 @@
  */
 
 import { db0, defaultEmbeddingFn, PROFILE_CONVERSATIONAL } from "@db0-ai/core";
-import type { Harness, EmbeddingFn, Db0Profile, Db0Backend } from "@db0-ai/core";
+import type { Harness, EmbeddingFn, Db0Profile, Db0Backend, ConsolidateFn } from "@db0-ai/core";
 import { createSqliteBackend } from "@db0-ai/backends-sqlite";
 import { db0MemoryMiddleware } from "./middleware.js";
 import type { Db0MiddlewareOptions } from "./middleware.js";
@@ -43,6 +43,8 @@ export interface CreateDb0Options {
   tokenBudget?: number;
   /** Extract facts automatically. Default: true */
   extractOnResponse?: boolean;
+  /** LLM function for memory consolidation. When provided, reconcile() merges semantically similar memories. */
+  consolidateFn?: ConsolidateFn;
 }
 
 export interface Db0Instance {
@@ -74,6 +76,8 @@ export async function createDb0(
 
   const backend = options.backend ?? await createSqliteBackend({ dbPath });
 
+  const consolidateFn = options.consolidateFn;
+
   let harness = db0.harness({
     agentId,
     sessionId,
@@ -81,6 +85,7 @@ export async function createDb0(
     backend,
     embeddingFn,
     profile,
+    consolidateFn,
   });
 
   const middlewareOpts: Db0MiddlewareOptions = {
@@ -101,6 +106,7 @@ export async function createDb0(
         backend,
         embeddingFn,
         profile,
+        consolidateFn,
       });
       // Update the middleware's harness reference
       middlewareOpts.harness = harness;
