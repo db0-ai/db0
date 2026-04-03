@@ -114,6 +114,7 @@ export class MemoryStore {
       await this.store.write(filePath, content);
       // Delete old file
       await this.store.delete(bestMatch.file.path);
+      await this.generateIndex();
       return {
         action: "superseded",
         file: filePath,
@@ -127,6 +128,7 @@ export class MemoryStore {
       frontmatter["related-to"] = [bestMatch.file.frontmatter.id];
       const content = serializeMarkdown(frontmatter, fact);
       await this.store.write(filePath, content);
+      await this.generateIndex();
       return {
         action: "related",
         file: filePath,
@@ -136,6 +138,7 @@ export class MemoryStore {
       // New: create independently
       const content = serializeMarkdown(frontmatter, fact);
       await this.store.write(filePath, content);
+      await this.generateIndex();
       return {
         action: "created",
         file: filePath,
@@ -314,6 +317,7 @@ export class MemoryStore {
       await this.store.delete(path);
     }
 
+    await this.generateIndex();
     return { merged, archived, expired };
   }
 
