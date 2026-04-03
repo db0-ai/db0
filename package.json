@@ -13,7 +13,8 @@
     "packages/integrations/ai-sdk",
     "packages/integrations/langchain",
     "packages/integrations/pi",
-    "packages/benchmark"
+    "packages/benchmark",
+    "packages/md"
   ],
   "scripts": {
     "build": "npm run build --workspaces",
