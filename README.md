@@ -107,7 +107,14 @@ npx @db0-ai/openclaw init
 
 Persistent memory, automatic fact extraction, sub-agent support. See [packages/apps/openclaw](packages/apps/openclaw).
 
-**Claude Code** — MCP server with skills and hooks. See [packages/apps/claude-code](packages/apps/claude-code).
+**Claude Code** — MCP server with skills and hooks:
+
+- **12 tools** including `db0_memory_verify` for codebase cross-referencing
+- **PreQuery hook** — automatically surfaces relevant memories before each query
+- **PostQuery hook** — auto-consolidation every 20 turns (configurable via `DB0_CONSOLIDATE_EVERY`)
+- **Inspect skill** — browse memories with staleness tracking and verification against the live codebase
+
+See [packages/apps/claude-code](packages/apps/claude-code).
 
 **AI SDK** — memory middleware for the [Vercel AI SDK](https://ai-sdk.dev). Wraps any model with `wrapLanguageModel()`:
 
@@ -189,6 +196,8 @@ Replaces deprecated `BufferMemory` with scoped, persistent memory. See [packages
 | **Noise filtering** | Rejects refusals, greetings, and process narration before extraction |
 | **L0 summaries** | Auto-generated one-line summaries for token-efficient context assembly |
 | **Provenance** | Every fact tracks source type, extraction method, and confidence |
+| **Staleness tracking** | Every result includes age label and caveat for memories older than 1 day — prevents acting on stale facts |
+| **Verification** | Detect file paths, function names, packages, and URLs in memories; generate actionable verification guidance |
 
 ### Context
 
@@ -199,7 +208,7 @@ The context lifecycle — what goes into the LLM's context window and what gets 
 | **`ingest`** | Write a fact with deduplication, contradiction detection, and entity enrichment |
 | **`pack`** | Assemble relevant memories into a token budget with relationship annotations |
 | **`preserve`** | Batch-extract and batch-embed facts from conversation messages before compaction |
-| **`reconcile`** | Background maintenance — promote high-access chunks, merge duplicates, clean stale edges. With `consolidateFn`: clusters similar memories and merges them via LLM |
+| **`reconcile`** | Background maintenance — promote high-access chunks, merge duplicates, clean stale edges. With `consolidateFn`: clusters similar memories and merges them via LLM. Can be triggered automatically via hooks (e.g., every N turns) |
 
 ### State
 
@@ -214,7 +223,7 @@ Checkpoint and branch execution state. Restore to any prior checkpoint. Branch f
 | Strategy | Tradeoff |
 |---|---|
 | **Rules** (default) | Signal-word matching. Zero LLM calls, deterministic, near-zero latency |
-| **LLM** | Higher precision via configurable prompt. Latency and cost tradeoff |
+| **LLM** | Higher precision via configurable prompt. Latency and cost tradeoff. Excludes code patterns, git history, debugging solutions, and ephemeral task details by default |
 | **Manual** | You call `memory().write()`. Full control, no surprises |
 
 ### Embeddings
@@ -249,6 +258,7 @@ The right profile can swing retrieval quality by 40+ points on benchmarks.
 
 - **CLI** — `db0 list`, `search`, `stats`, `export`, `import`
 - **Inspector** — web UI for browsing memory, state, and logs
+- **Memory verification** — `db0_memory_verify` detects file paths, function references, package names, and URLs in memories and generates actionable verification steps
 - **Benchmarks** — LoCoMo, LongMemEval, and feature-level test suites
 
 ## Packages

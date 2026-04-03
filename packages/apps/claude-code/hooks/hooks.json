@@ -1,5 +1,7 @@
 {
   "hooks": {
+    "PreToolUse": [],
+    "PostToolUse": [],
     "Notification": [
       {
         "matcher": ".*",
@@ -7,6 +9,28 @@
           {
             "type": "command",
             "command": "node -e \"const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')); if(d.message) process.stdout.write(JSON.stringify({decision:'allow'}))\""
+          }
+        ]
+      }
+    ],
+    "PreQuery": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/surface-memories.js"
+          }
+        ]
+      }
+    ],
+    "PostQuery": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/auto-consolidate.js"
           }
         ]
       }

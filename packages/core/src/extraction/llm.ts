@@ -45,7 +45,12 @@ Examples of facts to extract:
 Do NOT extract:
 - Trivial statements or greetings
 - Temporary information like "searching for files"
-- Opinions presented as part of analysis (only extract stated decisions/preferences)`;
+- Opinions presented as part of analysis (only extract stated decisions/preferences)
+- Code patterns, conventions, architecture, or project structure (these can be derived from the codebase)
+- Git history, recent changes, or who-changed-what (git log/blame are authoritative)
+- Debugging solutions or fix recipes (the fix is in the code; the commit message has context)
+- Ephemeral task details: in-progress work, temporary state, current conversation context
+- File paths or directory layouts (read the filesystem instead)`;
 
   constructor(
     private extractFn: (text: string) => Promise<ExtractionResult[]>,

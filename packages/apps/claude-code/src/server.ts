@@ -8,6 +8,7 @@ import {
 import {
   db0,
   defaultEmbeddingFn,
+  memoryAge,
   type Db0Backend,
   type Harness,
   type MemoryScope,
@@ -129,7 +130,7 @@ const TOOLS = [
   {
     name: "db0_memory_search",
     description:
-      "Search agent memories by semantic similarity. Returns the most relevant memories matching the query.",
+      "Search agent memories by semantic similarity. Returns the most relevant memories matching the query. IMPORTANT: Memories can become stale. If a memory names a file path, check it exists. If it names a function or flag, grep for it. Verify before acting.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -184,7 +185,7 @@ const TOOLS = [
   },
   {
     name: "db0_memory_get",
-    description: "Get a specific memory by ID.",
+    description: "Get a specific memory by ID. IMPORTANT: Memories can become stale. If a memory names a file path, check it exists. If it names a function or flag, grep for it. Verify before acting.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -287,6 +288,18 @@ const TOOLS = [
       properties: {},
     },
   },
+  {
+    name: "db0_memory_verify",
+    description:
+      "Analyze a memory and return verification guidance based on its content. Detects file paths, function/class names, URLs, and other references that should be checked against the current codebase before acting on the memory.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        id: { type: "string", description: "Memory ID to verify" },
+      },
+      required: ["id"],
+    },
+  },
 ];
 
 // === Tool handlers ===
@@ -327,17 +340,22 @@ async function handleTool(
         includeSuperseded: (args.includeSuperseded as boolean) ?? false,
         tags: (args.tags as string[]) ?? undefined,
       });
-      return results.map((r) => ({
-        id: r.id,
-        content:
-          typeof r.content === "string" ? r.content : JSON.stringify(r.content),
-        scope: r.scope,
-        status: r.status,
-        summary: r.summary,
-        score: Math.round(r.score * 1000) / 1000,
-        tags: r.tags,
-        createdAt: r.createdAt,
-      }));
+      return results.map((r) => {
+        const age = memoryAge(r.createdAt);
+        return {
+          id: r.id,
+          content:
+            typeof r.content === "string" ? r.content : JSON.stringify(r.content),
+          scope: r.scope,
+          status: r.status,
+          summary: r.summary,
+          score: Math.round(r.score * 1000) / 1000,
+          tags: r.tags,
+          createdAt: r.createdAt,
+          age: age.label,
+          ...(age.stalenessCaveat ? { stalenessCaveat: age.stalenessCaveat } : {}),
+        };
+      });
     }
 
     case "db0_memory_list": {
@@ -346,18 +364,23 @@ async function handleTool(
         .list((args.scope as MemoryScope) ?? undefined);
       const limit = (args.limit as number) ?? 50;
       memories = memories.slice(0, limit);
-      return memories.map((m) => ({
-        id: m.id,
-        content:
-          typeof m.content === "string"
-            ? m.content.slice(0, 200)
-            : JSON.stringify(m.content).slice(0, 200),
-        scope: m.scope,
-        status: m.status,
-        summary: m.summary,
-        tags: m.tags,
-        createdAt: m.createdAt,
-      }));
+      return memories.map((m) => {
+        const age = memoryAge(m.createdAt);
+        return {
+          id: m.id,
+          content:
+            typeof m.content === "string"
+              ? m.content.slice(0, 200)
+              : JSON.stringify(m.content).slice(0, 200),
+          scope: m.scope,
+          status: m.status,
+          summary: m.summary,
+          tags: m.tags,
+          createdAt: m.createdAt,
+          age: age.label,
+          ...(age.stalenessCaveat ? { stalenessCaveat: age.stalenessCaveat } : {}),
+        };
+      });
     }
 
     case "db0_memory_get": {
@@ -466,6 +489,56 @@ async function handleTool(
         contradictionsCleaned: result.contradictionsCleaned,
         consolidated: result.consolidated,
         consolidatedMemories: result.consolidatedMemories,
+      };
+    }
+
+    case "db0_memory_verify": {
+      const entry = await h.memory().get(args.id as string);
+      if (!entry) return { error: "Memory not found" };
+
+      const text =
+        typeof entry.content === "string"
+          ? entry.content
+          : JSON.stringify(entry.content);
+      const age = memoryAge(entry.createdAt);
+      const checks: string[] = [];
+
+      // Detect file paths (Unix and Windows styles)
+      const filePaths = text.match(/(?:\/[\w.\-/]+(?:\.\w+)?|[\w.\-]+\/[\w.\-/]+(?:\.\w+)?)/g);
+      if (filePaths) {
+        const unique = [...new Set(filePaths)];
+        checks.push(`File paths found: ${unique.join(", ")}. Check each exists with Glob or Read.`);
+      }
+
+      // Detect function/method names (e.g., "functionName()" or "ClassName.method()")
+      const funcNames = text.match(/\b[a-zA-Z_]\w*(?:\.\w+)*\s*\(\)/g);
+      if (funcNames) {
+        const unique = [...new Set(funcNames.map((f) => f.replace(/\s*\(\)/, "")))];
+        checks.push(`Function references: ${unique.join(", ")}. Grep to confirm they still exist.`);
+      }
+
+      // Detect package/dependency names
+      const pkgRefs = text.match(/(?:@[\w-]+\/[\w-]+|[\w-]+@[\d.^~]+)/g);
+      if (pkgRefs) {
+        checks.push(`Package references: ${[...new Set(pkgRefs)].join(", ")}. Check package.json for current versions.`);
+      }
+
+      // Detect URLs
+      const urls = text.match(/https?:\/\/[^\s)]+/g);
+      if (urls) {
+        checks.push(`URLs found: ${[...new Set(urls)].join(", ")}. Verify they are still accessible.`);
+      }
+
+      if (checks.length === 0) {
+        checks.push("No file paths, functions, packages, or URLs detected. Manual review recommended if acting on this memory.");
+      }
+
+      return {
+        id: entry.id,
+        summary: entry.summary,
+        age: age.label,
+        stalenessCaveat: age.stalenessCaveat,
+        verificationChecks: checks,
       };
     }
 

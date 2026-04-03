@@ -31,6 +31,8 @@ export { hashEmbed, defaultEmbeddingFn } from "./util/embed.js";
 export { rrfMerge, ftsScore } from "./util/rrf.js";
 export { VersionConflictError } from "./errors.js";
 export { defaultSummarize } from "./util/summarize.js";
+export { memoryAge } from "./util/age.js";
+export type { MemoryAge } from "./util/age.js";
 export { chunkText, ingestFile, enrichChunks, CHUNK_ENRICH_PROMPT, CHUNK_AUGMENT_PROMPT } from "./ingest/index.js";
 export type { ChunkOpts, FileIngestOpts, ChunkEnrichFn } from "./ingest/index.js";
 export { mergeProfiles } from "./types.js";
