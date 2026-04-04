@@ -265,6 +265,7 @@ The right profile can swing retrieval quality by 40+ points on benchmarks.
 
 | Package | Description |
 |---|---|
+| [`@db0-ai/db0`](packages/md) | Markdown-based memory store — CLI + SDK with scoping, superseding, and context packing |
 | [`@db0-ai/core`](packages/core) | Types, harness, memory/state/log/context, profiles, extraction |
 | [`@db0-ai/backends-sqlite`](packages/backends/sqlite) | SQLite via sql.js — zero native deps |
 | [`@db0-ai/backends-postgres`](packages/backends/postgres) | PostgreSQL + pgvector |

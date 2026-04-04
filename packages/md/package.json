@@ -1,0 +1,28 @@
+{
+  "name": "@db0-ai/db0",
+  "version": "0.3.0",
+  "description": "The embedded memory primitive for AI agents. Markdown files + smart lifecycle.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "db0": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "files": [
+    "README.md",
+    "dist"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@db0-ai/core": "0.3.0"
+  }
+}
