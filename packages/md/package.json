@@ -1,12 +1,12 @@
 {
-  "name": "@db0-ai/mdcli",
+  "name": "@db0-ai/db0",
   "version": "0.3.0",
-  "description": "The embedded memory primitive for AI agents. mdcli — Markdown files + smart lifecycle.",
+  "description": "The embedded memory primitive for AI agents. Markdown files + smart lifecycle.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "mdcli": "./dist/cli.js"
+    "db0": "./dist/cli.js"
   },
   "exports": {
     ".": {

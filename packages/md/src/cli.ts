@@ -52,7 +52,7 @@ function num(v: string | boolean | undefined, fallback: number): number {
 // ── Help ──────────────────────────────────────────────────────────
 
 function printHelp(): void {
-  console.log(`mdcli — markdown-based memory store for AI agents
+  console.log(`db0 — markdown-based memory store for AI agents
 
 Commands:
   remember <fact> [options]     Store a new memory
@@ -70,11 +70,11 @@ Options:
   --quiet                       Suppress output (consolidate only)
 
 Examples:
-  mdcli remember "User prefers dark mode" --scope user --dir ./memories
-  mdcli search "UI preferences" --limit 5 --dir ./memories
-  mdcli pack "language preferences" --budget 2000 --dir ./memories
-  mdcli consolidate --dir ./memories
-  mdcli index --dir ./memories
+  db0 remember "User prefers dark mode" --scope user --dir ./memories
+  db0 search "UI preferences" --limit 5 --dir ./memories
+  db0 pack "language preferences" --budget 2000 --dir ./memories
+  db0 consolidate --dir ./memories
+  db0 index --dir ./memories
 `);
 }
 
@@ -258,7 +258,7 @@ async function main(): Promise<void> {
       break;
     default:
       console.error(`Unknown command: ${command}`);
-      console.error("Run 'mdcli' with no arguments for help.");
+      console.error("Run 'db0' with no arguments for help.");
       process.exit(1);
   }
 }
